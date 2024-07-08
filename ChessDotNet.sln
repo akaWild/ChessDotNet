@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet", "ChessDotNet\ChessDotNet.csproj", "{9CDECAAE-B638-4333-BD7A-E5CFA81F99BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChessDotNet", "ChessDotNet\ChessDotNet.csproj", "{9CDECAAE-B638-4333-BD7A-E5CFA81F99BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessDotNet.Tests", "ChessDotNet.Test\ChessDotNet.Tests.csproj", "{8FB36B19-325B-4A00-8C86-75BAE5A0DF61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{9CDECAAE-B638-4333-BD7A-E5CFA81F99BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CDECAAE-B638-4333-BD7A-E5CFA81F99BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CDECAAE-B638-4333-BD7A-E5CFA81F99BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FB36B19-325B-4A00-8C86-75BAE5A0DF61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FB36B19-325B-4A00-8C86-75BAE5A0DF61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FB36B19-325B-4A00-8C86-75BAE5A0DF61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FB36B19-325B-4A00-8C86-75BAE5A0DF61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
