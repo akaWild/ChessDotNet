@@ -1,3 +1,4 @@
+﻿using ChessDotNet.Internal;
 ﻿using ChessDotNet.Public;
 
 namespace ChessDotNet
