@@ -1,5 +1,7 @@
-﻿using ChessDotNet.Internal;
-﻿using ChessDotNet.Public;
+﻿using ChessDotNet.Exceptions;
+using ChessDotNet.Internal;
+using ChessDotNet.Public;
+using ChessDotNet.Utils;
 
 namespace ChessDotNet
 {
@@ -10,9 +12,9 @@ namespace ChessDotNet
         private int _halfMoves = 0;
         private int _moveNumber = 0;
 
-        private ChessPiece[] _board = new ChessPiece[128];
+        private ChessPiece?[] _board = new ChessPiece?[128];
 
-        private readonly List<ChessHistory> _history = new();
+        private readonly Stack<ChessHistory> _history = new();
 
         private Dictionary<ChessColor, int> _kings = new()
         {
@@ -28,6 +30,192 @@ namespace ChessDotNet
         private readonly Dictionary<string, string> _comments = new();
         private readonly Dictionary<string, int> _positionCount = new();
 
+        public Chess(string fen = PublicData.DefaultChessPosition)
+        {
+            Load(fen);
+        }
+
+        public void Load(string fen, bool skipValidation = false, bool preserveHeaders = false)
+        {
+            var tokens = fen.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+            if (tokens.Length is >= 2 and < 6)
+            {
+                var adjustments = new[] { "-", "-", "0", "1" };
+
+                fen = string.Join(" ", tokens.Concat(adjustments[^(6 - tokens.Length)..]));
+            }
+
+            tokens = fen.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+            if (!skipValidation)
+            {
+                var fenValidationResult = FenValidator.ValidateFen(fen);
+                if (!fenValidationResult.Ok)
+                    throw new FenValidationException(fenValidationResult.Error!);
+            }
+
+            var position = tokens[0];
+            var square = 0;
+
+            Clear(preserveHeaders);
+
+            foreach (var piece in position)
+            {
+                if (piece == '/')
+                    square += 8;
+
+                else if (char.IsDigit(piece))
+                    square += int.Parse($"{piece}");
+                else
+                {
+                    var color = piece < 'a' ? ChessColor.White : ChessColor.Black;
+
+                    Put(new ChessPiece(color, (ChessPieceType)char.ToLower(piece)), HelperUtility.Algebraic(square));
+
+                    square++;
+                }
+            }
+
+            _turn = (ChessColor)tokens[1][0];
+
+            if (tokens[2].IndexOf('K') > -1)
+                _castling[ChessColor.White] |= (int)Bits.KSideCastle;
+
+            if (tokens[2].IndexOf('Q') > -1)
+                _castling[ChessColor.White] |= (int)Bits.QSideCastle;
+
+            if (tokens[2].IndexOf('k') > -1)
+                _castling[ChessColor.Black] |= (int)Bits.KSideCastle;
+
+            if (tokens[2].IndexOf('q') > -1)
+                _castling[ChessColor.Black] |= (int)Bits.QSideCastle;
+
+            _epSquare = tokens[3] == "-" ? InternalData.Empty : InternalData.Ox88[new ChessSquare(tokens[3])];
+            _halfMoves = int.Parse(tokens[4]);
+            _moveNumber = int.Parse(tokens[5]);
+
+            UpdateSetup(fen);
+            IncPositionCount(fen);
+        }
+
+        public void Clear(bool preserveHeaders = false)
+        {
+            _turn = ChessColor.White;
+            _epSquare = InternalData.Empty;
+            _halfMoves = 0;
+            _moveNumber = 1;
+
+            _board = new ChessPiece?[128];
+
+            _history.Clear();
+
+            _kings = new()
+            {
+                { ChessColor.White, InternalData.Empty},
+                { ChessColor.Black, InternalData.Empty},
+            };
+            _castling = new()
+            {
+                { ChessColor.White, 0},
+                { ChessColor.Black, 0},
+            };
+            _comments.Clear();
+            _positionCount.Clear();
+
+            if (!preserveHeaders)
+                _headers.Clear();
+
+            _headers.Remove("SetUp");
+            _headers.Remove("FEN");
+        }
+
+        public string Fen()
+        {
+            var empty = 0;
+            var fen = string.Empty;
+
+            for (var i = InternalData.Ox88[new ChessSquare("a8")]; i <= InternalData.Ox88[new ChessSquare("h1")]; i++)
+            {
+                var piece = _board[i];
+
+                if (piece != null)
+                {
+                    if (empty > 0)
+                    {
+                        fen += empty;
+                        empty = 0;
+                    }
+
+                    fen += piece.Color == ChessColor.White ? char.ToUpper((char)piece.PieceType) : char.ToLower((char)piece.PieceType);
+                }
+                else
+                    empty++;
+
+                if (((i + 1) & 0x88) != 0)
+                {
+                    if (empty > 0)
+                        fen += empty;
+
+                    if (i != InternalData.Ox88[new ChessSquare("h1")])
+                        fen += '/';
+
+                    empty = 0;
+                    i += 8;
+                }
+            }
+
+            var castling = string.Empty;
+
+            if ((_castling[ChessColor.White] & (int)Bits.KSideCastle) != 0)
+                castling += 'K';
+
+            if ((_castling[ChessColor.White] & (int)Bits.QSideCastle) != 0)
+                castling += 'Q';
+
+            if ((_castling[ChessColor.Black] & (int)Bits.KSideCastle) != 0)
+                castling += 'k';
+
+            if ((_castling[ChessColor.Black] & (int)Bits.QSideCastle) != 0)
+                castling += 'q';
+
+            if (castling == string.Empty)
+                castling = "-";
+
+            var epSquare = "-";
+
+            if (_epSquare != InternalData.Empty)
+            {
+                var bigPawnSquare = _epSquare + (_turn == ChessColor.White ? 16 : -16);
+                var squares = new[] { bigPawnSquare + 1, bigPawnSquare - 1 };
+
+                foreach (var square in squares)
+                {
+                    if ((square & 0x88) != 0)
+                        continue;
+
+                    var color = _turn;
+
+                    if (_board[square]?.Color == color && _board[square]?.PieceType == ChessPieceType.Pawn)
+                    {
+                        MakeMove(new InternalMove(color, square, _epSquare, ChessPieceType.Pawn, ChessPieceType.Pawn, null, Bits.EpCapture));
+
+                        var isLegal = !IsKingAttacked(color);
+                        UndoMove();
+
+                        if (isLegal)
+                        {
+                            epSquare = HelperUtility.Algebraic(_epSquare).ToString();
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return $"{fen} {(char)_turn} {castling} {epSquare} {_halfMoves} {_moveNumber}";
+        }
+
         public void SetHeader(PngHeader pngHeader) => _headers[pngHeader.Key] = pngHeader.Value;
 
         public PngHeader[] GetHeaders() => _headers.Select(kv => new PngHeader(kv.Key, kv.Value)).ToArray();
@@ -38,5 +226,307 @@ namespace ChessDotNet
         {
             return FenValidator.ValidateFen(fen);
         }
+
+        #region Private methods
+
+        private bool Put(ChessPiece piece, ChessSquare square)
+        {
+            var type = piece.PieceType;
+            var color = piece.Color;
+
+            if (!InternalData.Ox88.ContainsKey(square))
+                return false;
+
+            var sq = InternalData.Ox88[square];
+
+            if (type == ChessPieceType.King && !(_kings[color] == InternalData.Empty || _kings[color] == sq))
+                return false;
+
+            var currentPieceOnSquare = _board[sq];
+
+            if (currentPieceOnSquare is { PieceType: ChessPieceType.King })
+                _kings[currentPieceOnSquare.Color] = InternalData.Empty;
+
+            _board[sq] = new ChessPiece(color, type);
+
+            if (type == ChessPieceType.King)
+                _kings[color] = sq;
+
+            return true;
+        }
+
+        private void UpdateSetup(string fen)
+        {
+            if (_history.Count > 0)
+                return;
+
+            if (fen != PublicData.DefaultChessPosition)
+            {
+                _headers["SetUp"] = "1";
+                _headers["FEN"] = fen;
+            }
+            else
+            {
+                _headers.Remove("SetUp");
+                _headers.Remove("FEN");
+            }
+        }
+
+        private void IncPositionCount(string fen)
+        {
+            var trimmedFen = HelperUtility.TrimFen(fen);
+
+            _positionCount.TryAdd(trimmedFen, 0);
+
+            _positionCount[trimmedFen]++;
+        }
+
+        private void MakeMove(InternalMove move)
+        {
+            var us = _turn;
+            var them = HelperUtility.SwapColor(us);
+
+            Push(move);
+
+            _board[move.To] = _board[move.From];
+            _board[move.From] = null;
+
+            if ((move.Flags & Bits.EpCapture) != 0)
+            {
+                if (_turn == ChessColor.Black)
+                    _board[move.To - 16] = null;
+                else
+                    _board[move.To + 16] = null;
+            }
+
+            if (move.Promotion != null)
+                _board[move.To] = new ChessPiece(us, move.Promotion.Value);
+
+            if (_board[move.To]!.PieceType == ChessPieceType.King)
+            {
+                _kings[us] = move.To;
+
+                if ((move.Flags & Bits.KSideCastle) != 0)
+                {
+                    var castlingTo = move.To - 1;
+                    var castlingFrom = move.To + 1;
+
+                    _board[castlingTo] = _board[castlingFrom];
+                    _board[castlingFrom] = null;
+                }
+                else if ((move.Flags & Bits.QSideCastle) != 0)
+                {
+                    var castlingTo = move.To + 1;
+                    var castlingFrom = move.To - 2;
+
+                    _board[castlingTo] = _board[castlingFrom];
+                    _board[castlingFrom] = null;
+                }
+
+                _castling[us] = 0;
+            }
+
+            if (_castling[us] != 0)
+            {
+                foreach (var kv in InternalData.Rooks[us])
+                {
+                    if (move.From == kv.Key && (_castling[us] & kv.Value) != 0)
+                    {
+                        _castling[us] ^= kv.Value;
+
+                        break;
+                    }
+                }
+            }
+
+            if (_castling[them] != 0)
+            {
+                foreach (var kv in InternalData.Rooks[them])
+                {
+                    if (move.To == kv.Key && (_castling[them] & kv.Value) != 0)
+                    {
+                        _castling[them] ^= kv.Value;
+
+                        break;
+                    }
+                }
+            }
+
+            if ((move.Flags & Bits.BigPawn) != 0)
+            {
+                if (us == ChessColor.Black)
+                    _epSquare = move.To - 16;
+                else
+                    _epSquare = move.To + 16;
+            }
+            else
+                _epSquare = InternalData.Empty;
+
+            if (move.Piece == ChessPieceType.Pawn)
+                _halfMoves = 0;
+            else if ((move.Flags & (Bits.Capture | Bits.EpCapture)) != 0)
+                _halfMoves = 0;
+            else
+                _halfMoves++;
+
+            if (us == ChessColor.Black)
+                _moveNumber++;
+
+            _turn = them;
+        }
+
+        private InternalMove? UndoMove()
+        {
+            if (!_history.Any())
+                return null;
+
+            var old = _history.Pop();
+
+            var move = old.Move;
+
+            _kings = old.Kings;
+            _turn = old.Turn;
+            _castling = old.Castling;
+            _epSquare = old.EpSquare;
+            _halfMoves = old.HalfMoves;
+            _moveNumber = old.MoveNumber;
+
+            var us = _turn;
+            var them = HelperUtility.SwapColor(us);
+
+            _board[move.From] = _board[move.To];
+            _board[move.From]!.PieceType = move.Piece;
+
+            _board[move.To] = null;
+
+            if (move.Captured != null)
+            {
+                if ((move.Flags & Bits.EpCapture) != 0)
+                {
+                    int index;
+
+                    if (us == ChessColor.Black)
+                        index = move.To - 16;
+                    else
+                        index = move.To + 16;
+
+                    _board[index] = new ChessPiece(them, ChessPieceType.Pawn);
+                }
+                else
+                    _board[move.To] = new ChessPiece(them, move.Captured.Value);
+            }
+
+            if ((move.Flags & (Bits.KSideCastle | Bits.QSideCastle)) != 0)
+            {
+                int castlingTo, castlingFrom;
+
+                if ((move.Flags & Bits.KSideCastle) != 0)
+                {
+                    castlingTo = move.To + 1;
+                    castlingFrom = move.To - 1;
+                }
+                else
+                {
+                    castlingTo = move.To - 2;
+                    castlingFrom = move.To + 1;
+                }
+
+                _board[castlingTo] = _board[castlingFrom];
+                _board[castlingFrom] = null;
+            }
+
+            return move;
+        }
+
+        private void Push(InternalMove move)
+        {
+            _history.Push(new ChessHistory(
+                move,
+                new Dictionary<ChessColor, int> { { ChessColor.Black, _kings[ChessColor.Black] }, { ChessColor.White, _kings[ChessColor.White] } },
+                _turn,
+                new Dictionary<ChessColor, int> { { ChessColor.Black, _castling[ChessColor.Black] }, { ChessColor.White, _castling[ChessColor.White] } },
+                _epSquare,
+                _halfMoves,
+                _moveNumber
+            ));
+        }
+
+        private bool IsKingAttacked(ChessColor color)
+        {
+            var square = _kings[color];
+
+            return square != -1 && Attacked(HelperUtility.SwapColor(color), square).Length > 0;
+        }
+
+        private ChessSquare[] Attacked(ChessColor color, int square)
+        {
+            var attackers = new List<ChessSquare>();
+
+            for (var i = InternalData.Ox88[new ChessSquare("a8")]; i <= InternalData.Ox88[new ChessSquare("h1")]; i++)
+            {
+                if ((i & 0x88) != 0)
+                {
+                    i += 7;
+
+                    continue;
+                }
+
+                var piece = _board[i];
+                if (piece == null || piece.Color != color)
+                    continue;
+
+                var difference = i - square;
+
+                if (difference == 0)
+                    continue;
+
+                var index = difference + 119;
+
+                if ((InternalData.Attacks[index] & InternalData.PieceMasks[piece.PieceType]) != 0)
+                {
+                    if (piece.PieceType == ChessPieceType.Pawn)
+                    {
+                        if ((difference > 0 && piece.Color == ChessColor.White) || (difference <= 0 && piece.Color == ChessColor.Black))
+                            attackers.Add(HelperUtility.Algebraic(i));
+
+                        continue;
+                    }
+
+                    if (piece.PieceType == ChessPieceType.Knight || piece.PieceType == ChessPieceType.King)
+                    {
+                        attackers.Add(HelperUtility.Algebraic(i));
+
+                        continue;
+                    }
+
+                    var offset = InternalData.Rays[index];
+                    var j = i + offset;
+                    var blocked = false;
+
+                    while (j != square)
+                    {
+                        if (_board[j] != null)
+                        {
+                            blocked = true;
+
+                            break;
+                        }
+
+                        j += offset;
+                    }
+
+                    if (!blocked)
+                    {
+                        attackers.Add(HelperUtility.Algebraic(i));
+
+                        continue;
+                    }
+                }
+            }
+
+            return attackers.ToArray();
+        }
+
+        #endregion
     }
 }
