@@ -12,6 +12,8 @@ namespace ChessDotNet.Internal
         public const int Rank7 = 1;
         public const int Rank8 = 0;
 
+        public static string Symbols = "pnbrqkPNBRQK";
+
         public static FrozenDictionary<ChessSquare, int> Ox88 = new Dictionary<ChessSquare, int>
         {
             {new ChessSquare("a8"), 0},
