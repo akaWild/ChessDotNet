@@ -17,7 +17,7 @@ namespace ChessDotNet.Utils
             var file = File(square);
             var rank = Rank(square);
 
-            return new ChessSquare("abcdefgh"[file], "87654321"[rank]);
+            return new ChessSquare("abcdefgh"[file], int.Parse("87654321"[rank].ToString()));
         }
 
         public static string StripSan(string move) => Regex.Replace(move.Replace("=", ""), @"[+#]?[?!]*$", @"");
