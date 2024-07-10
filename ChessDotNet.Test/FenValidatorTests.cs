@@ -2,7 +2,7 @@ using ChessDotNet.Tests.TestData;
 
 namespace ChessDotNet.Tests
 {
-    public class FenValidatorTest
+    public class FenValidatorTests
     {
         [Fact]
         public void ValidateTest_FenWithNoKings_ReturnsError()
