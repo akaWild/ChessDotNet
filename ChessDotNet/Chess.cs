@@ -372,6 +372,8 @@ namespace ChessDotNet
 
         public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
 
+        public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);

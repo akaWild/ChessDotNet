@@ -388,5 +388,21 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region IsAttacked
+
+        [Theory]
+        [ClassData(typeof(IsAttackedTestData))]
+        public void IsAttacked_InputFenColorAndSquares_ReturnsCorrectInformationAboutAttackedSquares(string fen, ChessColor color, bool result, ChessSquare[] testSquares)
+        {
+            var chess = new Chess(fen);
+
+            if (result)
+                Assert.All(testSquares, sq => Assert.True(chess.IsAttacked(sq, color)));
+            else
+                Assert.All(testSquares, sq => Assert.False(chess.IsAttacked(sq, color)));
+        }
+
+        #endregion
     }
 }
