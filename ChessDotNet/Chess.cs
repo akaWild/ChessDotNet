@@ -374,6 +374,8 @@ namespace ChessDotNet
 
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
+        public bool IsCheck() => IsKingAttacked(_turn);
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
@@ -1088,8 +1090,6 @@ namespace ChessDotNet
                )
                 _castling[ChessColor.Black] &= ~(int)Bits.KSideCastle;
         }
-
-        private bool IsCheck() => IsKingAttacked(_turn);
 
         private bool IsCheckmate() => IsCheck() && Moves().Count == 0;
 
