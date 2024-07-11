@@ -404,5 +404,21 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region IsCheck
+
+        [Theory]
+        [InlineData(PublicData.DefaultChessPosition, false)]
+        [InlineData("rnb1kbnr/pppp1ppp/8/8/4Pp1q/2N5/PPPP2PP/R1BQKBNR w KQkq - 2 4", true)]
+        [InlineData("R3k3/8/4K3/8/8/8/8/8 b - - 0 1", true)]
+        [InlineData("4k3/4P3/4K3/8/8/8/8/8 b - - 0 1", false)]
+        public void IsCheck_ReturnsTrueIfKingOfActingTurnIsUnderCheck(string fen, bool result)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Equal(result, chess.IsCheck());
+        }
+
+        #endregion
     }
 }
