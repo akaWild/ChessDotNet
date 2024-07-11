@@ -12,11 +12,11 @@ namespace ChessDotNet.Tests.TestData
         }
     }
 
-    public class MoveObjectFailedTestData : TheoryData<string, MoveInfo, bool>
+    public class MoveObjectFailedTestData : TheoryData<string, MoveInfo>
     {
         public MoveObjectFailedTestData()
         {
-            Add("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new MoveInfo("e2", "e5"), false);
+            Add("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new MoveInfo("e2", "e5"));
         }
     }
 

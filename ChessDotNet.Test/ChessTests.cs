@@ -178,11 +178,11 @@ namespace ChessDotNet.Tests
 
         [Theory]
         [ClassData(typeof(MoveObjectFailedTestData))]
-        public void Move_IncorrectMoveObject_ThrowsInvalidMoveException(string fen, MoveInfo move, bool strict)
+        public void Move_IncorrectMoveObject_ThrowsInvalidMoveException(string fen, MoveInfo move)
         {
             var chess = new Chess(fen);
 
-            Assert.Throws<InvalidMoveException>(() => chess.Move(move, strict));
+            Assert.Throws<InvalidMoveException>(() => chess.Move(move));
         }
 
         [Theory]

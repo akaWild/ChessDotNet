@@ -232,7 +232,7 @@ namespace ChessDotNet
             return prettyMove;
         }
 
-        public ChessMove Move(MoveInfo move, bool strict = false)
+        public ChessMove Move(MoveInfo move)
         {
             InternalMove? moveObj = null;
 
