@@ -278,6 +278,40 @@ namespace ChessDotNet
 
         public bool RemoveHeader(string key) => _headers.Remove(key);
 
+        public string Ascii()
+        {
+            var s = "   +------------------------+\n";
+
+            for (var i = InternalData.Ox88[new ChessSquare("a8")]; i <= InternalData.Ox88[new ChessSquare("h1")]; i++)
+            {
+                if (HelperUtility.File(i) == 0)
+                    s += " " + "87654321"[HelperUtility.Rank(i)] + " |";
+
+                var boardPiece = _board[i];
+                if (boardPiece != null)
+                {
+                    var piece = boardPiece.PieceType;
+                    var color = boardPiece.Color;
+                    var symbol = color == ChessColor.White ? char.ToUpper((char)piece) : char.ToLower((char)piece);
+
+                    s += " " + symbol + " ";
+                }
+                else
+                    s += " . ";
+
+                if (((i + 1) & 0x88) != 0)
+                {
+                    s += "|\n";
+                    i += 8;
+                }
+            }
+
+            s += "   +------------------------+\n";
+            s += "     a  b  c  d  e  f  g  h";
+
+            return s;
+        }
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
