@@ -2,6 +2,7 @@
 using ChessDotNet.Internal;
 using ChessDotNet.Public;
 using ChessDotNet.Utils;
+using System.Text.RegularExpressions;
 
 namespace ChessDotNet
 {
@@ -214,6 +215,61 @@ namespace ChessDotNet
             }
 
             return $"{fen} {(char)_turn} {castling} {epSquare} {_halfMoves} {_moveNumber}";
+        }
+
+        public ChessMove Move(string move, bool strict = false)
+        {
+            var moveObj = MoveFromSan(move, strict);
+
+            if (moveObj == null)
+                throw new InvalidMoveException($"Invalid move: {move}");
+
+            var prettyMove = MakePretty(moveObj);
+
+            MakeMove(moveObj);
+            IncPositionCount(prettyMove.After);
+
+            return prettyMove;
+        }
+
+        public ChessMove Move(MoveInfo move, bool strict = false)
+        {
+            InternalMove? moveObj = null;
+
+            var from = move.From;
+            var to = move.To;
+            var promotion = move.Promotion;
+
+            var moves = Moves();
+
+            for (int i = 0, len = moves.Count; i < len; i++)
+            {
+                if
+                (
+                    from == HelperUtility.Algebraic(moves[i].From).ToString() &&
+                    to == HelperUtility.Algebraic(moves[i].To).ToString() &&
+                    (moves[i].Promotion == null || promotion == $"{(char)moves[i].Promotion!}")
+                )
+                {
+                    moveObj = moves[i];
+
+                    break;
+                }
+            }
+
+            if (moveObj == null)
+            {
+                var errorMessage = $"{{from: \"{from}\", to: \"{to}\", promotion: \"{promotion}\"}}";
+
+                throw new InvalidMoveException($"Invalid move: {errorMessage}");
+            }
+
+            var prettyMove = MakePretty(moveObj);
+
+            MakeMove(moveObj);
+            IncPositionCount(prettyMove.After);
+
+            return prettyMove;
         }
 
         public void SetHeader(PngHeader pngHeader) => _headers[pngHeader.Key] = pngHeader.Value;
@@ -526,6 +582,388 @@ namespace ChessDotNet
 
             return attackers.ToArray();
         }
+
+        private string MoveToSan(InternalMove move, InternalMove[] moves)
+        {
+            var output = string.Empty;
+
+            if ((move.Flags & Bits.KSideCastle) != 0)
+                output = "O-O";
+            else if ((move.Flags & Bits.QSideCastle) != 0)
+                output = "O-O-O";
+            else
+            {
+                if (move.Piece != ChessPieceType.Pawn)
+                {
+                    var disambiguator = HelperUtility.GetDisambiguator(move, moves);
+                    output += char.ToUpper((char)move.Piece) + disambiguator;
+                }
+
+                if ((move.Flags & (Bits.Capture | Bits.EpCapture)) != 0)
+                {
+                    if (move.Piece == ChessPieceType.Pawn)
+                        output += HelperUtility.Algebraic(move.From).File;
+
+                    output += 'x';
+                }
+
+                output += HelperUtility.Algebraic(move.To);
+
+                var promotion = move.Promotion;
+                if (promotion != null)
+                    output += '=' + char.ToUpper((char)promotion);
+            }
+
+            MakeMove(move);
+
+            if (IsCheck())
+            {
+                if (IsCheckmate())
+                    output += '#';
+                else
+                    output += '+';
+            }
+
+            UndoMove();
+
+            return output;
+        }
+
+        private InternalMove? MoveFromSan(string move, bool strict = false)
+        {
+            var cleanMove = HelperUtility.StripSan(move);
+
+            var pieceType = HelperUtility.InferPieceType(cleanMove);
+            var moves = Moves(true, pieceType);
+
+            for (int i = 0, len = moves.Count; i < len; i++)
+            {
+                if (cleanMove == HelperUtility.StripSan(MoveToSan(moves[i], moves.ToArray())))
+                    return moves[i];
+            }
+
+            if (strict)
+                return null;
+
+            ChessPieceType? piece = null;
+            string? from = null;
+            ChessSquare? to = null;
+            ChessPieceType? promotion = null;
+
+            var overlyDisambiguated = false;
+
+            var match = Regex.Match(cleanMove, @"(?<piece>[pnbrqkPNBRQK])?(?<from>[a-h][1-8])x?-?(?<to>[a-h][1-8])(?<promotion>[qrbnQRBN])?");
+
+            if (match.Success)
+            {
+                piece = match.Groups["piece"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
+                from = match.Groups["from"].Success ? match.Groups["from"].Value : null;
+                to = match.Groups["to"].Success ? new ChessSquare(match.Groups["to"].Value) : null;
+                promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
+
+                if (from?.Length == 1)
+                    overlyDisambiguated = true;
+            }
+            else
+            {
+                match = Regex.Match(cleanMove, @"(?<piece>[pnbrqkPNBRQK])?(?<from>[a-h]?[1-8]?)x?-?(?<to>[a-h][1-8])(?<promotion>[qrbnQRBN])?");
+
+                if (match.Success)
+                {
+                    piece = match.Groups["piece"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
+                    from = match.Groups["from"].Success ? match.Groups["from"].Value : null;
+                    to = match.Groups["to"].Success ? new ChessSquare(match.Groups["to"].Value) : null;
+                    promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
+
+                    if (from?.Length == 1)
+                        overlyDisambiguated = true;
+                }
+            }
+
+            moves = Moves(true, piece ?? pieceType);
+
+
+            if (to == null)
+                return null;
+
+            for (int i = 0, len = moves.Count; i < len; i++)
+            {
+                if (string.IsNullOrEmpty(from))
+                {
+                    if (cleanMove == HelperUtility.StripSan(MoveToSan(moves[i], moves.ToArray())).Replace("x", string.Empty))
+                        return moves[i];
+                }
+                else if (overlyDisambiguated)
+                {
+                    var square = HelperUtility.Algebraic(moves[i].From);
+
+                    if (
+                        (piece == null || piece == moves[i].Piece) &&
+                        InternalData.Ox88[to.Value] == moves[i].To &&
+                        (from[0] == square.File || from[0] == square.Rank) &&
+                        (promotion == null || promotion == moves[i].Promotion)
+                    )
+                        return moves[i];
+                }
+                else if (
+                  (piece == null || piece == moves[i].Piece) &&
+                  InternalData.Ox88[new ChessSquare(from)] == moves[i].From &&
+                  InternalData.Ox88[to.Value] == moves[i].To &&
+                  (promotion == null || promotion == moves[i].Promotion)
+                )
+                    return moves[i];
+            }
+
+            return null;
+        }
+
+        private ChessMove MakePretty(InternalMove uglyMove)
+        {
+            var color = uglyMove.Color;
+            var piece = uglyMove.Piece;
+            var from = uglyMove.From;
+            var to = uglyMove.To;
+            var flags = uglyMove.Flags;
+            var captured = uglyMove.Captured;
+            var promotion = uglyMove.Promotion;
+
+            var prettyFlags = string.Empty;
+
+            foreach (var flag in Enum.GetValues<Bits>())
+            {
+                if ((flag & flags) != 0)
+                    prettyFlags += (char)Enum.Parse<Flags>(flag.ToString());
+            }
+
+            var fromAlgebraic = HelperUtility.Algebraic(from);
+            var toAlgebraic = HelperUtility.Algebraic(to);
+
+            var move = new ChessMove(
+                color,
+                fromAlgebraic,
+                toAlgebraic,
+                piece,
+                null,
+                null,
+                prettyFlags,
+                MoveToSan(uglyMove, Moves().ToArray()),
+                fromAlgebraic.ToString() + toAlgebraic,
+                Fen(),
+                string.Empty);
+
+            MakeMove(uglyMove);
+
+            move.After = Fen();
+
+            UndoMove();
+
+            if (captured != null)
+                move.Captured = captured;
+
+            if (promotion != null)
+            {
+                move.Promotion = promotion;
+                move.Lan += promotion;
+            }
+
+            return move;
+        }
+
+        private List<InternalMove> Moves(bool legal = true, ChessPieceType? piece = null, ChessSquare? square = null)
+        {
+            ChessSquare? forSquare = null;
+            if (square != null)
+                forSquare = Enum.Parse<ChessSquare>(square.ToString()!.ToLower());
+
+            var forPiece = piece;
+
+            var moves = new List<InternalMove>();
+
+            var us = _turn;
+            var them = HelperUtility.SwapColor(us);
+
+            var firstSquare = InternalData.Ox88[new ChessSquare("a8")];
+            var lastSquare = InternalData.Ox88[new ChessSquare("h1")];
+
+            var singleSquare = false;
+
+            if (forSquare != null)
+            {
+                if (!InternalData.Ox88.ContainsKey(forSquare.Value))
+                    return new List<InternalMove>();
+
+                firstSquare = lastSquare = InternalData.Ox88[forSquare.Value];
+
+                singleSquare = true;
+            }
+
+            for (var from = firstSquare; from <= lastSquare; from++)
+            {
+                if ((from & 0x88) != 0)
+                {
+                    from += 7;
+
+                    continue;
+                }
+
+                var fromPiece = _board[from];
+                if (fromPiece == null || fromPiece.Color == them)
+                    continue;
+
+                var type = fromPiece.PieceType;
+
+
+                int to;
+
+                if (type == ChessPieceType.Pawn)
+                {
+                    if (forPiece == null && forPiece != type)
+                        continue;
+
+                    to = from + InternalData.PawnOffsets[us][0];
+                    if (_board[to] == null)
+                    {
+                        HelperUtility.AddMove(moves, us, from, to, ChessPieceType.Pawn);
+
+                        to = from + InternalData.PawnOffsets[us][1];
+
+                        if (InternalData.SecondRank[us] == HelperUtility.Rank(from) && _board[to] == null)
+                            HelperUtility.AddMove(moves, us, from, to, ChessPieceType.Pawn, null, Bits.BigPawn);
+                    }
+
+                    for (var j = 2; j < 4; j++)
+                    {
+                        to = from + InternalData.PawnOffsets[us][j];
+                        if ((to & 0x88) != 0)
+                            continue;
+
+                        if (_board[to]?.Color == them)
+                            HelperUtility.AddMove(moves, us, from, to, ChessPieceType.Pawn, _board[to]?.PieceType, Bits.Capture);
+                        else if (to == _epSquare)
+                            HelperUtility.AddMove(moves, us, from, to, ChessPieceType.Pawn, ChessPieceType.Pawn, Bits.EpCapture);
+                    }
+                }
+                else
+                {
+                    if (forPiece != null && forPiece != type)
+                        continue;
+
+                    for (int j = 0, len = InternalData.PieceOffsets[type].Length; j < len; j++)
+                    {
+                        var offset = InternalData.PieceOffsets[type][j];
+                        to = from;
+
+                        while (true)
+                        {
+                            to += offset;
+                            if ((to & 0x88) != 0)
+                                break;
+
+                            if (_board[to] == null)
+                                HelperUtility.AddMove(moves, us, from, to, type);
+                            else
+                            {
+                                if (_board[to]?.Color == us)
+                                    break;
+
+                                HelperUtility.AddMove(
+                                    moves,
+                                    us,
+                                    from,
+                                    to,
+                                    type,
+                                    _board[to]?.PieceType,
+                                    Bits.Capture
+                                );
+
+                                break;
+                            }
+
+                            if (type is ChessPieceType.Knight or ChessPieceType.King)
+                                break;
+                        }
+                    }
+                }
+            }
+
+            if (forPiece is null or ChessPieceType.King)
+            {
+                if (!singleSquare || lastSquare == _kings[us])
+                {
+                    if ((_castling[us] & (int)Bits.KSideCastle) != 0)
+                    {
+                        var castlingFrom = _kings[us];
+                        var castlingTo = castlingFrom + 2;
+
+                        if (
+                        _board[castlingFrom + 1] == null &&
+                        _board[castlingTo] == null &&
+                        Attacked(them, _kings[us]).Length == 0 &&
+                        Attacked(them, castlingFrom + 1).Length == 0 &&
+                        Attacked(them, castlingTo).Length == 0
+                        )
+                        {
+                            HelperUtility.AddMove(
+                                moves,
+                                us,
+                                _kings[us],
+                                castlingTo,
+                                ChessPieceType.King,
+                                null,
+                                Bits.KSideCastle
+                            );
+                        }
+                    }
+
+                    if ((_castling[us] & (int)Bits.QSideCastle) != 0)
+                    {
+                        var castlingFrom = _kings[us];
+                        var castlingTo = castlingFrom - 2;
+
+                        if (
+                        _board[castlingFrom - 1] == null &&
+                        _board[castlingFrom - 2] == null &&
+                        _board[castlingFrom - 3] == null &&
+                        Attacked(them, this._kings[us]).Length == 0 &&
+                        Attacked(them, castlingFrom - 1).Length == 0 &&
+                        Attacked(them, castlingTo).Length == 0
+                        )
+                        {
+                            HelperUtility.AddMove(
+                                moves,
+                                us,
+                                _kings[us],
+                                castlingTo,
+                                ChessPieceType.King,
+                                null,
+                                Bits.QSideCastle
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (!legal || _kings[us] == -1)
+                return moves;
+
+            var legalMoves = new List<InternalMove>();
+
+            for (int i = 0, len = moves.Count; i < len; i++)
+            {
+                MakeMove(moves[i]);
+
+                if (!IsKingAttacked(us))
+                    legalMoves.Add(moves[i]);
+
+                UndoMove();
+            }
+
+            return legalMoves;
+        }
+
+        private bool IsCheck() => IsKingAttacked(_turn);
+
+        private bool IsCheckmate() => IsCheck() && Moves().Count == 0;
 
         #endregion
     }

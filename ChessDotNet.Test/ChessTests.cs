@@ -1,6 +1,7 @@
 ﻿using ChessDotNet.Exceptions;
 using ChessDotNet.Public;
 using ChessDotNet.Tests.TestData;
+using ChessDotNet.Tests.TestUtils;
 
 namespace ChessDotNet.Tests
 {
@@ -133,7 +134,7 @@ namespace ChessDotNet.Tests
         #region Fen
 
         [Fact]
-        public void Load_Constructor_ReturnsDefaultPosition()
+        public void Fen_Constructor_ReturnsDefaultPosition()
         {
             var chess = new Chess();
 
@@ -149,6 +150,62 @@ namespace ChessDotNet.Tests
             var chess = new Chess(fen);
 
             Assert.Equal(fen, chess.Fen());
+        }
+
+        [Theory]
+        [ClassData(typeof(FenWithMoveCorrectTestData))]
+        public void Fen_LoadFenMakeMove_ReturnsCorrectFen(string inputFen, string move, string outputFen)
+        {
+            var chess = new Chess(inputFen);
+
+            chess.Move(move);
+
+            Assert.Equal(outputFen, chess.Fen());
+        }
+
+        #endregion
+
+        #region Move
+
+        [Theory]
+        [ClassData(typeof(MoveStringFailedTestData))]
+        public void Move_IncorrectMoveString_ThrowsInvalidMoveException(string fen, string move, bool strict)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Throws<InvalidMoveException>(() => chess.Move(move, strict));
+        }
+
+        [Theory]
+        [ClassData(typeof(MoveObjectFailedTestData))]
+        public void Move_IncorrectMoveObject_ThrowsInvalidMoveException(string fen, MoveInfo move, bool strict)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Throws<InvalidMoveException>(() => chess.Move(move, strict));
+        }
+
+        [Theory]
+        [ClassData(typeof(MoveStringCorrectTestData))]
+        public void Move_CorrectMoveString_ReturnsMatchedMoveObjectAndCorrectFen(string inputFen, string move, string outputFen, MoveResultTestObject moveResult)
+        {
+            var chess = new Chess(inputFen);
+
+            var outputMove = chess.Move(move);
+
+            Assert.Equal(outputFen, chess.Fen());
+
+            Assert.Equal(moveResult.From, outputMove.From.ToString());
+            Assert.Equal(moveResult.To, outputMove.To.ToString());
+
+            if (moveResult.Piece != null)
+                Assert.Equal(moveResult.Piece, (char)outputMove.Piece);
+
+            if (moveResult.Captured != null)
+                Assert.Equal(moveResult.Captured, outputMove.Captured == null ? null : (char)outputMove.Captured);
+
+            if (moveResult.Flags != null)
+                Assert.Equal(moveResult.Flags, outputMove.Flags);
         }
 
         #endregion
