@@ -208,6 +208,17 @@ namespace ChessDotNet.Tests
                 Assert.Equal(moveResult.Flags, outputMove.Flags);
         }
 
+        [Theory]
+        [ClassData(typeof(MoveObjectCorrectTestData))]
+        public void Move_CorrectMoveObject_ReturnsCorrectFen(string inputFen, MoveInfo move, string outputFen)
+        {
+            var chess = new Chess(inputFen);
+
+            chess.Move(move);
+
+            Assert.Equal(outputFen, chess.Fen());
+        }
+
         #endregion
 
         #region Clear

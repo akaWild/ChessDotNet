@@ -34,4 +34,14 @@ namespace ChessDotNet.Tests.TestData
             Add("rnbqkbnr/pppp1ppp/8/8/4PpP1/8/PPPP3P/RNBQKBNR b KQkq g3 0 3", "fg3", "rnbqkbnr/pppp1ppp/8/8/4P3/6p1/PPPP3P/RNBQKBNR w KQkq - 0 4", new MoveResultTestObject("f4", "g3", 'p', null, null));
         }
     }
+
+    public class MoveObjectCorrectTestData : TheoryData<string, MoveInfo, string>
+    {
+        public MoveObjectCorrectTestData()
+        {
+            Add("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new MoveInfo("e2", "e4"), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+            Add("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", new MoveInfo("e2", "e4", "q"), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+            Add("8/1k5P/8/8/8/8/8/1K6 w - - 0 1", new MoveInfo("h7", "h8", "n"), "7N/1k6/8/8/8/8/8/1K6 b - - 0 1");
+        }
+    }
 }
