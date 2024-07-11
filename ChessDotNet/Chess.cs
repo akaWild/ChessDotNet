@@ -812,12 +812,11 @@ namespace ChessDotNet
 
                 var type = fromPiece.PieceType;
 
-
                 int to;
 
                 if (type == ChessPieceType.Pawn)
                 {
-                    if (forPiece == null && forPiece != type)
+                    if (forPiece != null && forPiece != type)
                         continue;
 
                     to = from + InternalData.PawnOffsets[us][0];
