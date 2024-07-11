@@ -336,6 +336,8 @@ namespace ChessDotNet
             return s;
         }
 
+        public ChessSquare[] Attackers(ChessSquare square, ChessColor? attackedBy) => Attacked(attackedBy ?? _turn, InternalData.Ox88[square]);
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);

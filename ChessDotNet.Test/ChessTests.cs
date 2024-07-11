@@ -305,5 +305,50 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region Attackers
+
+        [Theory]
+        [ClassData(typeof(AttackersCountPerSquareTestData))]
+        public void Attackers_InputFenAndColor_ReturnsCorrectAttackersCountPerSquare(string fen, ChessColor color, int[] counts)
+        {
+            var chess = new Chess(fen);
+
+            for (var i = 0; i < PublicData.Squares.Length; i++)
+                Assert.Equal(chess.Attackers(PublicData.Squares[i], color).Length, counts[i]);
+        }
+
+        [Theory]
+        [ClassData(typeof(AttackersIncludeSquaresTestData))]
+        public void Attackers_InputFenSquareAndColor_ReturnsCorrectAttackerSquares(string fen, ChessSquare square, ChessColor? color, ChessSquare[] attackerSquaresExpected)
+        {
+            var chess = new Chess(fen);
+
+            var attackerSquaresActual = chess.Attackers(square, color);
+
+            Assert.Equal(attackerSquaresExpected.Length, attackerSquaresActual.Length);
+
+            foreach (var expectedSquare in attackerSquaresExpected)
+                Assert.Contains(expectedSquare, attackerSquaresActual);
+        }
+
+        [Theory]
+        [ClassData(typeof(AttackersIncludeSquaresWithMovesTestData))]
+        public void Attackers_InputFenMovesSquareAndColor_ReturnsCorrectAttackerSquares(string fen, string[] moves, ChessSquare square, ChessColor? color, ChessSquare[] attackerSquaresExpected)
+        {
+            var chess = new Chess(fen);
+
+            foreach (var move in moves)
+                chess.Move(move);
+
+            var attackerSquaresActual = chess.Attackers(square, color);
+
+            Assert.Equal(attackerSquaresExpected.Length, attackerSquaresActual.Length);
+
+            foreach (var expectedSquare in attackerSquaresExpected)
+                Assert.Contains(expectedSquare, attackerSquaresActual);
+        }
+
+        #endregion
     }
 }
