@@ -278,6 +278,30 @@ namespace ChessDotNet
 
         public bool RemoveHeader(string key) => _headers.Remove(key);
 
+        public BoardItem?[][] Board()
+        {
+            var output = new List<BoardItem?[]>();
+            var row = new List<BoardItem?>();
+
+            for (var i = InternalData.Ox88[new ChessSquare("a8")]; i <= InternalData.Ox88[new ChessSquare("h1")]; i++)
+            {
+                var boardItem = _board[i];
+
+                row.Add(boardItem == null ? null : new BoardItem(HelperUtility.Algebraic(i), boardItem.PieceType, boardItem.Color));
+
+                if (((i + 1) & 0x88) != 0)
+                {
+                    output.Add(row.ToArray());
+
+                    row.Clear();
+
+                    i += 8;
+                }
+            }
+
+            return output.ToArray();
+        }
+
         public string Ascii()
         {
             var s = "   +------------------------+\n";

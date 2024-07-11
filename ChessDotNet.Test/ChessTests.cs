@@ -286,5 +286,24 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region Board
+
+        [Theory]
+        [ClassData(typeof(BoardCorrectTestData))]
+        public void Board_CorrectInput_ReturnsCorrectBoardItems(string fen, BoardItem?[][] boardItemsExpected)
+        {
+            var chess = new Chess(fen);
+
+            var boardItemsActual = chess.Board();
+
+            for (int i = 0; i < boardItemsExpected.GetLength(0); i++)
+            {
+                for (int j = 0; j < boardItemsExpected[i].Length; j++)
+                    Assert.Equal(boardItemsActual[i][j], boardItemsExpected[i][j]);
+            }
+        }
+
+        #endregion
     }
 }
