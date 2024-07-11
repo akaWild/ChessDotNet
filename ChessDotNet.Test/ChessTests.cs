@@ -350,5 +350,30 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region Castling rights
+
+        [Theory]
+        [ClassData(typeof(CastlingRightsTestData))]
+        public void CastlingRights_InputData_ReturnsExpectedValues(string fen, bool clear, ChessColor color, CastlingRights castlingRights, bool setExpectedResult, bool getExpectedResult)
+        {
+            var chess = new Chess(fen);
+
+            if (clear)
+                chess.Clear();
+
+            var setActualResult = chess.SetCastlingRights(color, castlingRights);
+
+            Assert.Equal(setExpectedResult, setActualResult);
+
+            var getActualResult = chess.GetCastlingRights(color);
+            if (castlingRights.KingCastlingRights != null)
+                Assert.Equal(getExpectedResult, getActualResult.KingCastlingRights);
+
+            if (castlingRights.QueenCastlingRights != null)
+                Assert.Equal(getExpectedResult, getActualResult.QueenCastlingRights);
+        }
+
+        #endregion
     }
 }

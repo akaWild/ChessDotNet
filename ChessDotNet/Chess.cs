@@ -338,6 +338,38 @@ namespace ChessDotNet
 
         public ChessSquare[] Attackers(ChessSquare square, ChessColor? attackedBy) => Attacked(attackedBy ?? _turn, InternalData.Ox88[square]);
 
+        public bool SetCastlingRights(ChessColor color, CastlingRights castlingRights)
+        {
+            if (castlingRights.KingCastlingRights != null)
+            {
+                if (castlingRights.KingCastlingRights.Value)
+                    _castling[color] |= (int)InternalData.Sides[ChessPieceType.King];
+                else
+                    _castling[color] &= ~(int)InternalData.Sides[ChessPieceType.King];
+            }
+
+            if (castlingRights.QueenCastlingRights != null)
+            {
+                if (castlingRights.QueenCastlingRights.Value)
+                    _castling[color] |= (int)InternalData.Sides[ChessPieceType.Queen];
+                else
+                    _castling[color] &= ~(int)InternalData.Sides[ChessPieceType.Queen];
+            }
+
+            UpdateCastlingRights();
+
+            var result = GetCastlingRights(color);
+
+            return (castlingRights.KingCastlingRights == null || castlingRights.KingCastlingRights == result.KingCastlingRights) &&
+                   (castlingRights.QueenCastlingRights == null || castlingRights.QueenCastlingRights == result.QueenCastlingRights);
+        }
+
+        public CastlingRights GetCastlingRights(ChessColor color)
+        {
+            return new CastlingRights((_castling[color] & (int)InternalData.Sides[ChessPieceType.King]) != 0,
+                (_castling[color] & (int)InternalData.Sides[ChessPieceType.Queen]) != 0);
+        }
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
@@ -1018,6 +1050,39 @@ namespace ChessDotNet
             }
 
             return legalMoves;
+        }
+
+        private void UpdateCastlingRights()
+        {
+            var whiteKingInPlace = _board[InternalData.Ox88[new ChessSquare("e1")]]?.PieceType == ChessPieceType.King &&
+                                   _board[InternalData.Ox88[new ChessSquare("e1")]]?.Color == ChessColor.White;
+
+            var blackKingInPlace = _board[InternalData.Ox88[new ChessSquare("e8")]]?.PieceType == ChessPieceType.King &&
+                                   _board[InternalData.Ox88[new ChessSquare("e8")]]?.Color == ChessColor.Black;
+
+            if (!whiteKingInPlace ||
+                _board[InternalData.Ox88[new ChessSquare("a1")]]?.PieceType != ChessPieceType.Rook
+                || _board[InternalData.Ox88[new ChessSquare("a1")]]?.Color != ChessColor.White
+               )
+                _castling[ChessColor.White] &= ~(int)Bits.QSideCastle;
+
+            if (!whiteKingInPlace ||
+                _board[InternalData.Ox88[new ChessSquare("h1")]]?.PieceType != ChessPieceType.Rook ||
+                _board[InternalData.Ox88[new ChessSquare("h1")]]?.Color != ChessColor.White
+               )
+                _castling[ChessColor.White] &= ~(int)Bits.KSideCastle;
+
+            if (!blackKingInPlace ||
+                _board[InternalData.Ox88[new ChessSquare("a8")]]?.PieceType != ChessPieceType.Rook ||
+                _board[InternalData.Ox88[new ChessSquare("a8")]]?.Color != ChessColor.Black
+               )
+                _castling[ChessColor.Black] &= ~(int)Bits.QSideCastle;
+
+            if (!blackKingInPlace ||
+                _board[InternalData.Ox88[new ChessSquare("h8")]]?.PieceType != ChessPieceType.Rook ||
+                _board[InternalData.Ox88[new ChessSquare("h8")]]?.Color != ChessColor.Black
+               )
+                _castling[ChessColor.Black] &= ~(int)Bits.KSideCastle;
         }
 
         private bool IsCheck() => IsKingAttacked(_turn);
