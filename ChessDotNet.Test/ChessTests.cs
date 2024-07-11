@@ -375,5 +375,18 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region Get
+
+        [Theory]
+        [ClassData(typeof(GetTestData))]
+        public void Get_InputSquare_ReturnsCorrectPiece(string fen, ChessSquare square, ChessPiece? piece)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Equal(piece, chess.Get(square));
+        }
+
+        #endregion
     }
 }

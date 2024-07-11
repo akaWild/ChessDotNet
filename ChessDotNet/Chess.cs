@@ -370,6 +370,8 @@ namespace ChessDotNet
                 (_castling[color] & (int)InternalData.Sides[ChessPieceType.Queen]) != 0);
         }
 
+        public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
