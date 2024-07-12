@@ -532,6 +532,8 @@ namespace ChessDotNet
 
         public bool IsDraw() => _halfMoves >= 100 || IsStalemate() || IsInsufficientMaterial() || IsThreefoldRepetition();
 
+        public bool IsGameOver() => IsCheckmate() || IsStalemate() || IsDraw();
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
