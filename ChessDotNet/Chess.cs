@@ -372,6 +372,20 @@ namespace ChessDotNet
 
         public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
 
+
+        public string[] GetMoves(ChessPieceType? piece = null, ChessSquare? square = null)
+        {
+            var moves = Moves(piece: piece, square: square);
+
+            return moves.Select(move => MoveToSan(move, moves.ToArray())).ToArray();
+        }
+
+        public ChessMove[] GetMovesVerbose(ChessPieceType? piece = null, ChessSquare? square = null)
+        {
+            var moves = Moves(piece: piece, square: square);
+
+            return moves.Select(MakePretty).ToArray();
+        }
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
         public bool IsCheck() => IsKingAttacked(_turn);

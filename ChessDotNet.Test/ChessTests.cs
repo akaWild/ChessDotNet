@@ -389,6 +389,38 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+
+        #region GetMoves
+
+        [Theory]
+        [ClassData(typeof(MovesTestData))]
+        public void GetMoves_InputFenPieceTypeAndSquare_ReturnsCorrectMoves(string fen, ChessPieceType? pieceType, ChessSquare? square, string[] movesExpected)
+        {
+            var chess = new Chess(fen);
+
+            var movesActual = chess.GetMoves(pieceType, square);
+
+            Assert.Equal(movesExpected.Length, movesActual.Length);
+
+            foreach (var move in movesExpected)
+                Assert.Contains(move, movesActual);
+        }
+
+        [Theory]
+        [ClassData(typeof(MovesVerboseTestData))]
+        public void GetMovesVerbose_InputFenPieceTypeAndSquare_ReturnsCorrectVerboseMoves(string fen, ChessPieceType? pieceType, ChessSquare? square, ChessMove[] movesExpected)
+        {
+            var chess = new Chess(fen);
+
+            var movesActual = chess.GetMovesVerbose(pieceType, square);
+
+            Assert.Equal(movesExpected.Length, movesActual.Length);
+
+            foreach (var move in movesExpected)
+                Assert.Contains(move, movesActual);
+        }
+        #endregion
+
         #region IsAttacked
 
         [Theory]
