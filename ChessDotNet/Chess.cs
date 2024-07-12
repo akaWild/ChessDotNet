@@ -380,6 +380,68 @@ namespace ChessDotNet
 
         public bool IsThreefoldRepetition() => GetPositionCount(Fen()) >= 3;
 
+        public bool IsInsufficientMaterial()
+        {
+            var pieces = new Dictionary<ChessPieceType, int>()
+            {
+                { ChessPieceType.Bishop, 0},
+                { ChessPieceType.Knight, 0},
+                { ChessPieceType.Rook, 0},
+                { ChessPieceType.Queen, 0},
+                { ChessPieceType.King, 0},
+                { ChessPieceType.Pawn, 0},
+            };
+
+            var bishops = new List<int>();
+
+            var numPieces = 0;
+            var squareColor = 0;
+
+            for (var i = InternalData.Ox88[new ChessSquare("a8")]; i <= InternalData.Ox88[new ChessSquare("h1")]; i++)
+            {
+                squareColor = (squareColor + 1) % 2;
+
+                if ((i & 0x88) != 0)
+                {
+                    i += 7;
+
+                    continue;
+                }
+
+                var piece = _board[i];
+
+                if (piece != null)
+                {
+                    pieces[piece.PieceType]++;
+
+                    if (piece.PieceType == ChessPieceType.Bishop)
+                        bishops.Add(squareColor);
+
+                    numPieces++;
+                }
+            }
+
+            if (numPieces == 2)
+                return true;
+
+            if (numPieces == 3 && (pieces[ChessPieceType.Bishop] == 1 || pieces[ChessPieceType.Knight] == 1))
+                return true;
+
+            if (numPieces == pieces[ChessPieceType.Bishop] + 2)
+            {
+                var sum = 0;
+                var len = bishops.Count;
+
+                for (var i = 0; i < len; i++)
+                    sum += bishops[i];
+
+                if (sum == 0 || sum == len)
+                    return true;
+            }
+
+            return false;
+        }
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);

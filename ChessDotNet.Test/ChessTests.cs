@@ -452,5 +452,27 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region IsInsufficientMaterial
+
+        [Theory]
+        [InlineData("8/8/8/8/8/8/8/k6K w - - 0 1", true)]
+        [InlineData("8/2N5/8/8/8/8/8/k6K w - - 0 1", true)]
+        [InlineData("8/2b5/8/8/8/8/8/k6K w - - 0 1", true)]
+        [InlineData("8/b7/3B4/8/8/8/8/k6K w - - 0 1", true)]
+        [InlineData("8/b1B1b1B1/1b1B1b1B/8/8/8/8/1k5K w - - 0 1", true)]
+        [InlineData(PublicData.DefaultChessPosition, false)]
+        [InlineData("8/2p5/8/8/8/8/8/k6K w - - 0 1", false)]
+        [InlineData("5k1K/7B/8/6b1/8/8/8/8 b - - 0 1", false)]
+        [InlineData("7K/5k1N/8/6b1/8/8/8/8 b - - 0 1", false)]
+        [InlineData("7K/5k1N/8/4n3/8/8/8/8 b - - 0 1", false)]
+        public void IsInsufficientMaterial_ReturnsTrueIfThereIsInsufficientMaterial(string fen, bool result)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Equal(result, chess.IsInsufficientMaterial());
+        }
+
+        #endregion
     }
 }
