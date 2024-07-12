@@ -416,6 +416,31 @@ namespace ChessDotNet
             return piece;
         }
 
+        public int Perft(int depth)
+        {
+            var moves = Moves(false);
+
+            var nodes = 0;
+            var color = _turn;
+
+            for (int i = 0, len = moves.Count; i < len; i++)
+            {
+                MakeMove(moves[i]);
+
+                if (!IsKingAttacked(color))
+                {
+                    if (depth - 1 > 0)
+                        nodes += Perft(depth - 1);
+                    else
+                        nodes++;
+                }
+
+                UndoMove();
+            }
+
+            return nodes;
+        }
+
         public void Reset() => Load(PublicData.DefaultChessPosition);
 
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
