@@ -503,6 +503,21 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region Reset
+
+        [Fact]
+        public void Reset_ClearAndResetBoard_ReturnsDefaultPosition()
+        {
+            var chess = new Chess();
+
+            chess.Clear();
+            chess.Reset();
+
+            Assert.Equal(PublicData.DefaultChessPosition, chess.Fen());
+        }
+
+        #endregion
+
         #region IsAttacked
 
         [Theory]

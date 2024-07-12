@@ -416,6 +416,8 @@ namespace ChessDotNet
             return piece;
         }
 
+        public void Reset() => Load(PublicData.DefaultChessPosition);
+
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
         public bool IsCheck() => IsKingAttacked(_turn);
