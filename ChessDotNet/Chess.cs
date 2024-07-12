@@ -543,6 +543,8 @@ namespace ChessDotNet
             return (HelperUtility.Rank(sq) + HelperUtility.File(sq)) % 2 == 0 ? ChessColor.White : ChessColor.Black;
         }
 
+        public int MoveNumber() => _moveNumber;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
