@@ -786,7 +786,7 @@ namespace ChessDotNet
 
                 var promotion = move.Promotion;
                 if (promotion != null)
-                    output += '=' + char.ToUpper((char)promotion);
+                    output += "=" + char.ToUpper((char)promotion);
             }
 
             MakeMove(move);
@@ -938,7 +938,7 @@ namespace ChessDotNet
             if (promotion != null)
             {
                 move.Promotion = promotion;
-                move.Lan += promotion;
+                move.Lan += (char)promotion;
             }
 
             return move;
@@ -946,9 +946,7 @@ namespace ChessDotNet
 
         private List<InternalMove> Moves(bool legal = true, ChessPieceType? piece = null, ChessSquare? square = null)
         {
-            ChessSquare? forSquare = null;
-            if (square != null)
-                forSquare = Enum.Parse<ChessSquare>(square.ToString()!.ToLower());
+            ChessSquare? forSquare = square;
 
             var forPiece = piece;
 
