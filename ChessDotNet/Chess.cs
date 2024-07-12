@@ -534,6 +534,8 @@ namespace ChessDotNet
 
         public bool IsGameOver() => IsCheckmate() || IsStalemate() || IsDraw();
 
+        public ChessColor GetTurn() => _turn;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
