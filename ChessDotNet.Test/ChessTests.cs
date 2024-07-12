@@ -454,6 +454,21 @@ namespace ChessDotNet.Tests
         }
 
         [Theory]
+        [ClassData(typeof(MovesAsStringTestData))]
+        public void GetMoves_InputFen_ReturnsCorrectMoves(string fen, string moves)
+        {
+            var chess = new Chess(fen);
+
+            var movesExpected = moves.Split();
+            var movesActual = chess.GetMoves();
+
+            Assert.Equal(movesExpected.Length, movesActual.Length);
+
+            foreach (var move in movesExpected)
+                Assert.Contains(move, movesActual);
+        }
+
+        [Theory]
         [ClassData(typeof(MovesVerboseTestData))]
         public void GetMovesVerbose_InputFenPieceTypeAndSquare_ReturnsCorrectVerboseMoves(string fen, ChessPieceType? pieceType, ChessSquare? square, ChessMove[] movesExpected)
         {
