@@ -272,6 +272,21 @@ namespace ChessDotNet
             return prettyMove;
         }
 
+        public ChessMove? Undo()
+        {
+            var move = UndoMove();
+            if (move != null)
+            {
+                var prettyMove = MakePretty(move);
+
+                DecPositionCount(prettyMove.After);
+
+                return prettyMove;
+            }
+
+            return null;
+        }
+
         public void SetHeader(PngHeader pngHeader) => _headers[pngHeader.Key] = pngHeader.Value;
 
         public PngHeader[] GetHeaders() => _headers.Select(kv => new PngHeader(kv.Key, kv.Value)).ToArray();
@@ -571,6 +586,16 @@ namespace ChessDotNet
             _positionCount.TryAdd(trimmedFen, 0);
 
             _positionCount[trimmedFen]++;
+        }
+
+        private void DecPositionCount(string fen)
+        {
+            var trimmedFen = HelperUtility.TrimFen(fen);
+
+            if (_positionCount[trimmedFen] == 1)
+                _positionCount.Remove(trimmedFen);
+            else
+                _positionCount[trimmedFen] -= 1;
         }
 
         private int GetPositionCount(string fen)
