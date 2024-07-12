@@ -400,6 +400,22 @@ namespace ChessDotNet
             return moves.Select(MakePretty).ToArray();
         }
 
+        public ChessPiece? Remove(ChessSquare square)
+        {
+            var piece = Get(square);
+
+            _board[InternalData.Ox88[square]] = null;
+
+            if (piece is { PieceType: ChessPieceType.King })
+                _kings[piece.Color] = InternalData.Empty;
+
+            UpdateCastlingRights();
+            UpdateEnPassantSquare();
+            UpdateSetup(Fen());
+
+            return piece;
+        }
+
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
         public bool IsCheck() => IsKingAttacked(_turn);

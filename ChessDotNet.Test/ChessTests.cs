@@ -468,6 +468,41 @@ namespace ChessDotNet.Tests
         }
         #endregion
 
+        #region Remove
+
+        [Fact]
+        public void Remove_NonEmptySquare_ReturnsPiece()
+        {
+            var chess = new Chess();
+
+            Assert.Equal(new ChessPiece(ChessColor.White, ChessPieceType.Queen), chess.Remove(new ChessSquare("d1")));
+            Assert.Null(chess.Get(new ChessSquare("d1")));
+        }
+
+        [Fact]
+        public void Remove_EmptySquare_ReturnsNull()
+        {
+            var chess = new Chess();
+
+            Assert.Null(chess.Remove(new ChessSquare("e4")));
+        }
+
+        [Theory]
+        [ClassData(typeof(RemoveTestData))]
+        public void Remove_InputFenAndSquare_NotReturnsProvidedMoves(string fen, ChessSquare square, string[] movesToTest)
+        {
+            var chess = new Chess(fen);
+
+            chess.Remove(square);
+
+            var movesActual = chess.GetMoves();
+
+            foreach (var move in movesToTest)
+                Assert.DoesNotContain(move, movesActual);
+        }
+
+        #endregion
+
         #region IsAttacked
 
         [Theory]
@@ -498,6 +533,17 @@ namespace ChessDotNet.Tests
             Assert.Equal(result, chess.IsCheck());
         }
 
+        [Fact]
+        public void IsCheck_RemovedKings_ReturnsFalse()
+        {
+            var chess = new Chess();
+
+            chess.Remove(new ChessSquare("e1"));
+            chess.Remove(new ChessSquare("e8"));
+
+            Assert.False(chess.IsCheck());
+        }
+
         #endregion
 
         #region IsStalemate
@@ -512,6 +558,17 @@ namespace ChessDotNet.Tests
             var chess = new Chess(fen);
 
             Assert.Equal(result, chess.IsStalemate());
+        }
+
+        [Fact]
+        public void IsStalemate_RemovedKings_ReturnsFalse()
+        {
+            var chess = new Chess();
+
+            chess.Remove(new ChessSquare("e1"));
+            chess.Remove(new ChessSquare("e8"));
+
+            Assert.False(chess.IsStalemate());
         }
 
         #endregion
@@ -575,6 +632,17 @@ namespace ChessDotNet.Tests
         public void IsCheckmate_ReturnsFalse(string fen)
         {
             var chess = new Chess(fen);
+
+            Assert.False(chess.IsCheckmate());
+        }
+
+        [Fact]
+        public void IsCheckmate_RemovedKings_ReturnsFalse()
+        {
+            var chess = new Chess();
+
+            chess.Remove(new ChessSquare("e1"));
+            chess.Remove(new ChessSquare("e8"));
 
             Assert.False(chess.IsCheckmate());
         }
