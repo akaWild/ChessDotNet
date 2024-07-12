@@ -376,6 +376,8 @@ namespace ChessDotNet
 
         public bool IsCheck() => IsKingAttacked(_turn);
 
+        public bool IsStalemate() => !IsCheck() && Moves().Count == 0;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);

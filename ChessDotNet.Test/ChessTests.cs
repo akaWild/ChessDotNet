@@ -420,5 +420,21 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region IsStalemate
+
+        [Theory]
+        [InlineData("1R6/8/8/8/8/8/7R/k6K b - - 0 1", true)]
+        [InlineData("8/8/5k2/p4p1p/P4K1P/1r6/8/8 w - - 0 2", true)]
+        [InlineData(PublicData.DefaultChessPosition, false)]
+        [InlineData("R3k3/8/4K3/8/8/8/8/8 b - - 0 1", false)]
+        public void IsStalemate_ReturnsTrueIfStalemate(string fen, bool result)
+        {
+            var chess = new Chess(fen);
+
+            Assert.Equal(result, chess.IsStalemate());
+        }
+
+        #endregion
     }
 }
