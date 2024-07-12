@@ -72,7 +72,7 @@ namespace ChessDotNet
                 {
                     var color = piece < 'a' ? ChessColor.White : ChessColor.Black;
 
-                    Put(new ChessPiece(color, (ChessPieceType)char.ToLower(piece)), HelperUtility.Algebraic(square));
+                    Put((ChessPieceType)char.ToLower(piece), color, HelperUtility.Algebraic(square));
 
                     square++;
                 }
@@ -372,6 +372,19 @@ namespace ChessDotNet
 
         public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
 
+        public bool Put(ChessPiece piece, ChessSquare square)
+        {
+            if (Put(piece.PieceType, piece.Color, square))
+            {
+                UpdateCastlingRights();
+                UpdateEnPassantSquare();
+                UpdateSetup(Fen());
+
+                return true;
+            }
+
+            return false;
+        }
 
         public string[] GetMoves(ChessPieceType? piece = null, ChessSquare? square = null)
         {
@@ -386,6 +399,7 @@ namespace ChessDotNet
 
             return moves.Select(MakePretty).ToArray();
         }
+
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
         public bool IsCheck() => IsKingAttacked(_turn);
@@ -467,11 +481,8 @@ namespace ChessDotNet
 
         #region Private methods
 
-        private bool Put(ChessPiece piece, ChessSquare square)
+        private bool Put(ChessPieceType type, ChessColor color, ChessSquare square)
         {
-            var type = piece.PieceType;
-            var color = piece.Color;
-
             if (!InternalData.Ox88.ContainsKey(square))
                 return false;
 
@@ -1178,6 +1189,30 @@ namespace ChessDotNet
                 _board[InternalData.Ox88[new ChessSquare("h8")]]?.Color != ChessColor.Black
                )
                 _castling[ChessColor.Black] &= ~(int)Bits.KSideCastle;
+        }
+
+        private void UpdateEnPassantSquare()
+        {
+            if (_epSquare == InternalData.Empty)
+                return;
+
+            var startSquare = _epSquare + (_turn == ChessColor.White ? -16 : 16);
+            var currentSquare = _epSquare + (_turn == ChessColor.White ? 16 : -16);
+            var attackers = new[] { currentSquare + 1, currentSquare - 1 };
+
+            if (_board[startSquare] != null || _board[_epSquare] != null ||
+                _board[currentSquare]?.Color != HelperUtility.SwapColor(_turn) || _board[currentSquare]?.PieceType != ChessPieceType.Pawn
+            )
+            {
+                _epSquare = InternalData.Empty;
+
+                return;
+            }
+
+            var canCapture = (int square) => (square & 0x88) == 0 && _board[square]?.Color == _turn && _board[square]?.PieceType == ChessPieceType.Pawn;
+
+            if (!attackers.Any(canCapture))
+                _epSquare = InternalData.Empty;
         }
 
         #endregion

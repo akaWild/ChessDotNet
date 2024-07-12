@@ -389,6 +389,53 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region Put
+
+        [Fact]
+        public void Put_Put2WhiteKingsOnEmptyBoard_ReturnsTrueAndFalse()
+        {
+            var chess = new Chess();
+            chess.Clear();
+
+            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+            Assert.False(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a3")));
+        }
+
+        [Fact]
+        public void Put_Put2BlackKingsOnEmptyBoard_ReturnsTrueAndFalse()
+        {
+            var chess = new Chess();
+            chess.Clear();
+
+            Assert.True(chess.Put(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("e8")));
+            Assert.False(chess.Put(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("d8")));
+        }
+
+        [Fact]
+        public void Put_Put2WhiteKingsOnEmptyBoardOnSameSquare_ReturnsTrueAndTrue()
+        {
+            var chess = new Chess();
+            chess.Clear();
+
+            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+        }
+
+        [Theory]
+        [ClassData(typeof(PutTestData))]
+        public void Put_InputFenPieceAndSquare_NotReturnsProvidedMoves(string fen, ChessPiece piece, ChessSquare square, string[] movesToTest)
+        {
+            var chess = new Chess(fen);
+
+            chess.Put(piece, square);
+
+            var movesActual = chess.GetMoves();
+
+            foreach (var move in movesToTest)
+                Assert.DoesNotContain(move, movesActual);
+        }
+
+        #endregion
 
         #region GetMoves
 
