@@ -436,5 +436,21 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region IsThreefoldRepetition
+
+        [Theory]
+        [ClassData(typeof(IsThreefoldRepetitionTestData))]
+        public void IsThreefoldRepetition_InputFenAndMoves_ReturnsCorrectIsThreefoldRepetition(string fen, string[] moves, bool result)
+        {
+            var chess = new Chess(fen);
+
+            foreach (var move in moves)
+                chess.Move(move);
+
+            Assert.Equal(result, chess.IsThreefoldRepetition());
+        }
+
+        #endregion
     }
 }

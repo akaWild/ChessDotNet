@@ -378,6 +378,8 @@ namespace ChessDotNet
 
         public bool IsStalemate() => !IsCheck() && Moves().Count == 0;
 
+        public bool IsThreefoldRepetition() => GetPositionCount(Fen()) >= 3;
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);
@@ -435,6 +437,13 @@ namespace ChessDotNet
             _positionCount.TryAdd(trimmedFen, 0);
 
             _positionCount[trimmedFen]++;
+        }
+
+        private int GetPositionCount(string fen)
+        {
+            var trimmedFen = HelperUtility.TrimFen(fen);
+
+            return _positionCount.TryGetValue(trimmedFen, out var value) ? value : 0;
         }
 
         private void MakeMove(InternalMove move)
