@@ -376,6 +376,8 @@ namespace ChessDotNet
 
         public bool IsCheck() => IsKingAttacked(_turn);
 
+        public bool IsCheckmate() => IsCheck() && Moves().Count == 0;
+
         public bool IsStalemate() => !IsCheck() && Moves().Count == 0;
 
         public bool IsThreefoldRepetition() => GetPositionCount(Fen()) >= 3;
@@ -1165,8 +1167,6 @@ namespace ChessDotNet
                )
                 _castling[ChessColor.Black] &= ~(int)Bits.KSideCastle;
         }
-
-        private bool IsCheckmate() => IsCheck() && Moves().Count == 0;
 
         #endregion
     }
