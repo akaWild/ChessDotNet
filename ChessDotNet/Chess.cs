@@ -536,6 +536,13 @@ namespace ChessDotNet
 
         public ChessColor GetTurn() => _turn;
 
+        public ChessColor GetSquareColor(ChessSquare square)
+        {
+            var sq = InternalData.Ox88[square];
+
+            return (HelperUtility.Rank(sq) + HelperUtility.File(sq)) % 2 == 0 ? ChessColor.White : ChessColor.Black;
+        }
+
         public static FenValidationResult ValidateFen(string fen)
         {
             return FenValidator.ValidateFen(fen);

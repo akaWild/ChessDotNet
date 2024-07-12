@@ -698,5 +698,18 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region GetSquareColor
+
+        [Theory]
+        [ClassData(typeof(GetSquareColorTestData))]
+        public void GetSquareColor_InputSquare_ReturnsCorrectColor(ChessSquare square, ChessColor color)
+        {
+            var chess = new Chess();
+
+            Assert.Equal(color, chess.GetSquareColor(square));
+        }
+
+        #endregion
     }
 }
