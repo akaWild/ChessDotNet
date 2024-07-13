@@ -867,5 +867,46 @@ namespace ChessDotNet.Tests
         }
 
         #endregion
+
+        #region ChessSquare
+
+        [Theory]
+        [ClassData(typeof(ChessSquareV1TestData))]
+        public void ChessSquare_ConstructorV1_SuccessOrThrowsException(char file, int rank, bool isOk)
+        {
+            if (isOk)
+                Assert.Null(Record.Exception(() => new ChessSquare(file, rank)));
+            else
+                Assert.Throws<InvalidChessSquareException>(() => new ChessSquare(file, rank));
+        }
+
+        [Theory]
+        [ClassData(typeof(ChessSquareV2TestData))]
+        public void ChessSquare_ConstructorV2_SuccessOrThrowsException(string square, bool isOk)
+        {
+            if (isOk)
+                Assert.Null(Record.Exception(() => new ChessSquare(square)));
+            else
+                Assert.Throws<InvalidChessSquareException>(() => new ChessSquare(square));
+        }
+
+        [Theory]
+        [ClassData(typeof(ChessSquareImplicitConversionTestData))]
+        public void ChessSquare_ImplicitConversion_SuccessOrThrowsException(string square, bool isOk)
+        {
+            var chess = new Chess();
+
+            if (isOk)
+            {
+                var normalResult = chess.Get(new ChessSquare(square));
+                var implicitResult = chess.Get(square);
+
+                Assert.Equal(normalResult, implicitResult);
+            }
+            else
+                Assert.Throws<InvalidChessSquareException>(() => chess.Get(square));
+        }
+
+        #endregion
     }
 }
