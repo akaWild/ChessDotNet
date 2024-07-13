@@ -4,7 +4,7 @@
     {
         Normal = 'n',
         Capture = 'c',
-        BigPawn = 'p',
+        BigPawn = 'b',
         EpCapture = 'e',
         Promotion = 'p',
         KSideCastle = 'k',
