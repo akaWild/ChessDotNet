@@ -940,7 +940,7 @@ namespace ChessDotNet
                 piece = match.Groups["piece"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
                 from = match.Groups["from"].Success ? match.Groups["from"].Value : null;
                 to = match.Groups["to"].Success ? new ChessSquare(match.Groups["to"].Value) : null;
-                promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
+                promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["promotion"].Value[0]) : null;
 
                 if (from?.Length == 1)
                     overlyDisambiguated = true;
