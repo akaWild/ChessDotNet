@@ -317,6 +317,56 @@ namespace ChessDotNet
             return output.ToArray();
         }
 
+        public string[] GetHistory()
+        {
+            var reversedHistory = new Stack<InternalMove?>();
+            var moveHistory = new List<string>();
+
+            while (_history.Count > 0)
+                reversedHistory.Push(UndoMove());
+
+            while (true)
+            {
+                if (reversedHistory.Count == 0)
+                    break;
+
+                var move = reversedHistory.Pop();
+                if (move == null)
+                    break;
+
+                moveHistory.Add(MoveToSan(move, Moves().ToArray()));
+
+                MakeMove(move);
+            }
+
+            return moveHistory.ToArray();
+        }
+
+        public ChessMove[] GetHistoryVerbose()
+        {
+            var reversedHistory = new Stack<InternalMove?>();
+            var moveHistory = new List<ChessMove>();
+
+            while (_history.Count > 0)
+                reversedHistory.Push(UndoMove());
+
+            while (true)
+            {
+                if (reversedHistory.Count == 0)
+                    break;
+
+                var move = reversedHistory.Pop();
+                if (move == null)
+                    break;
+
+                moveHistory.Add(MakePretty(move));
+
+                MakeMove(move);
+            }
+
+            return moveHistory.ToArray();
+        }
+
         public string Ascii()
         {
             var s = "   +------------------------+\n";

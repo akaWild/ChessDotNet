@@ -397,6 +397,62 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region History
+
+        [Theory]
+        [ClassData(typeof(HistoryFenSetupTestData))]
+        public void GetHistory_FenSetup_ReturnsCorrectFenAndHistory(string fen, string[] moves)
+        {
+            var chess = new Chess();
+
+            foreach (var move in moves)
+                chess.Move(move);
+
+            var history = chess.GetHistory();
+
+            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(history.Length, moves.Length);
+
+            foreach (var move in moves)
+                Assert.Contains(move, history);
+        }
+
+        [Theory]
+        [ClassData(typeof(HistoryVerboseFenSetupTestData))]
+        public void GetHistoryVerbose_FenSetup_ReturnsCorrectFenAndHistory(string fen, ChessMove[] moves)
+        {
+            var chess = new Chess();
+
+            foreach (var move in moves)
+                chess.Move(move.San);
+
+            var history = chess.GetHistoryVerbose();
+
+            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(history.Length, moves.Length);
+
+            foreach (var move in moves)
+                Assert.Contains(move, history);
+        }
+
+        [Theory]
+        [ClassData(typeof(HistoryVerbosePngSetupTestData))]
+        public void GetHistoryVerbose_PngSetup_ReturnsCorrectHistory(string pgn, ChessMove[] moves)
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn(pgn);
+
+            var history = chess.GetHistoryVerbose();
+
+            Assert.Equal(history.Length, moves.Length);
+
+            foreach (var move in moves)
+                Assert.Contains(move, history);
+        }
+
+        #endregion
+
         #region Attackers
 
         [Theory]
