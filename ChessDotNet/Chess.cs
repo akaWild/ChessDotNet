@@ -387,6 +387,151 @@ namespace ChessDotNet
 
         public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
 
+        public void LoadPgn(string pgn, bool strict = false)
+        {
+            pgn = pgn.Trim();
+
+            var matches = Regex.Match(pgn, @"^(\[((?:\r?\n)|.)*\])((?:\s*\r?\n){2}|(?:\s*\r?\n)*$)");
+            var headerString = matches.Groups.Count >= 2 ? matches.Groups[1].Value : string.Empty;
+
+            Reset();
+
+            var headers = parsePgnHeader(headerString);
+            var fen = string.Empty;
+
+            foreach (var key in headers.Keys)
+            {
+                if (key.ToLower() == "fen")
+                    fen = headers[key];
+
+                SetHeader(new PngHeader(key, headers[key]));
+            }
+
+            if (!strict)
+            {
+                if (fen != string.Empty)
+                    Load(fen, preserveHeaders: true);
+            }
+            else
+            {
+                if (headers.TryGetValue("SetUp", out var setUpValue) && setUpValue == "1")
+                {
+                    if (!headers.ContainsKey("FEN"))
+                        throw new InvalidPgnException("Invalid PGN: FEN tag must be supplied with SetUp tag");
+
+                    Load(headers["FEN"], preserveHeaders: true);
+                }
+            }
+
+            var ms = headerString != string.Empty ? pgn.Replace(headerString, string.Empty) : pgn;
+
+            ms = Regex.Replace(ms, @"(?<bracket>{[^}]*})+?|;(?<semicolon>([^\r?\n]*))", (match) => match.Groups["bracket"].Success
+                ? EncodeComment(match.Groups["bracket"].Value)
+                : ' ' + EncodeComment($"{{${match.Groups["bracket"].Value[1..]}}}"));
+
+            ms = Regex.Replace(ms, @"\r?\n", " ");
+
+            var ravRegex = @"(\([^()]+\))+?";
+
+            while (Regex.IsMatch(ms, ravRegex))
+                ms = Regex.Replace(ms, ravRegex, "");
+
+            ms = Regex.Replace(ms, @"\d+\.(\.\.)?", "");
+            ms = Regex.Replace(ms, @"\.\.\.", "");
+            ms = Regex.Replace(ms, @"\$\d+", "");
+
+            var moves = Regex.Split(ms.Trim(), @"\s+");
+            moves = moves.Where((move) => move != "").ToArray();
+
+            var result = string.Empty;
+
+            foreach (var m in moves)
+            {
+                var comment = DecodeComment(m);
+
+                if (comment != null)
+                {
+                    _comments[Fen()] = comment;
+
+                    continue;
+                }
+
+                var move = MoveFromSan(m, strict);
+
+                if (move == null)
+                {
+                    if (Array.IndexOf(InternalData.TerminationMarkers, m) != -1)
+                        result = m;
+                    else
+                        throw new InvalidPgnMoveException($"Invalid move in PGN: {m}");
+                }
+                else
+                {
+                    result = string.Empty;
+
+                    MakeMove(move);
+                    IncPositionCount(Fen());
+                }
+            }
+
+            if (result != string.Empty && _headers.Count > 0 && !_headers.ContainsKey("Result"))
+                SetHeader(new PngHeader("Result", result));
+            Dictionary<string, string> parsePgnHeader(string header)
+            {
+                var headerObj = new Dictionary<string, string>();
+                var headers = Regex.Split(header, "\r?\n");
+
+                foreach (var h in headers)
+                {
+                    var match = Regex.Match(h, @"^\s*\[\s*(?<key>[A-Za-z]+)\s*""(?<value>.*)""\s*\]\s*$");
+
+                    if (match.Success)
+                    {
+                        var key = match.Groups["key"].Value;
+                        var value = match.Groups["value"].Value;
+
+                        if (key.Trim().Length > 0)
+                            headerObj[key] = value;
+                    }
+                }
+
+                return headerObj;
+            }
+
+            string ToHex(string s)
+            {
+                var output = string.Concat(s.Select(c => c < 128 ? Uri.HexEscape(c) : Uri.EscapeDataString($"{c}").Replace("%", "").ToLower()));
+
+                return output;
+            }
+
+            string FromHex(string s)
+            {
+                if (s.Length == 0)
+                    return string.Empty;
+
+                var matches = Regex.Matches(s, @".{1,2}");
+                var input = matches.Count > 0 ? string.Join("", matches.Select(m => m.Value)) : string.Empty;
+
+                return Uri.UnescapeDataString($"%{input}");
+            }
+
+            string EncodeComment(string s)
+            {
+                s = Regex.Replace(s, @"\r?\n", " ");
+
+                return $"{{{ToHex(s[1..^1])}}}";
+            }
+
+            string? DecodeComment(string s)
+            {
+                if (s.StartsWith("{") && s.EndsWith("}"))
+                    return FromHex(s[1..^1]);
+
+                return null;
+            }
+        }
+
         public bool Put(ChessPiece piece, ChessSquare square)
         {
             if (Put(piece.PieceType, piece.Color, square))

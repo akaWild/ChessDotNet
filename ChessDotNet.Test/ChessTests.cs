@@ -131,6 +131,62 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region Load PGN
+
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictFalseCorrectTestData))]
+        public void LoadPgn_InputPgn_ReturnsCorrectFen(string pgn, string? fen)
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn(pgn);
+
+            if (fen != null)
+                Assert.Equal(fen, chess.Fen());
+            else
+                Assert.Null(Record.Exception(() => chess.LoadPgn(pgn)));
+        }
+
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictFalseInvalidPgnMoveTestData))]
+        public void LoadPgn_InputPgn_ThrowsInvalidPgnMoveException(string pgn)
+        {
+            var chess = new Chess();
+
+            Assert.Throws<InvalidPgnMoveException>(() => chess.LoadPgn(pgn));
+        }
+
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictFalseInvalidFenTestData))]
+        public void LoadPgn_InputPgn_ThrowsFenValidationException(string pgn)
+        {
+            var chess = new Chess();
+
+            Assert.Throws<FenValidationException>(() => chess.LoadPgn(pgn));
+        }
+
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictTrueCorrectTestData))]
+        public void LoadPgn_InputPgnStrictMode_ReturnsCorrectFen(string pgn, string fen)
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn(pgn, true);
+
+            Assert.Equal(fen, chess.Fen());
+        }
+
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictTrueInvalidPgnMoveTestData))]
+        public void LoadPgn_InputPgnStrictMode_ThrowsInvalidPgnMoveException(string pgn)
+        {
+            var chess = new Chess();
+
+            Assert.Throws<InvalidPgnMoveException>(() => chess.LoadPgn(pgn, true));
+        }
+
+        #endregion
+
         #region Fen
 
         [Fact]
