@@ -84,6 +84,8 @@ namespace ChessDotNet.Tests.TestData
             Add("1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Qf5 Nc6 7.Bb5 Ne7 8.Qxe5\r\nQd7 9.O-O Nxe5 10.Bxd7+ Nxd7 11.Rd1 O-O-O 12.Nc3 Ng6 13.Be3 a6 14.Ba7 b6 15.Na4\r\nKb7 16.Bxb6 cxb6 17.b3 b5 18.Nb2 Nge5 19.f3 Rc8 20.Rac1 Ba3 21.Rb1 Rxc2 22.f4\r\nNg4 23.Rxd7+ Kc6 24.Rxf7 Bxb2 25.Rxg7 Ne3 26.Rg3 Bd4 27.Kh1 Rxa2 28.Rc1+ Kb6\r\n29.e5 Rf8 30.e6 Rxf4 31.e7 Re4 32.Rg7 Bxg7", "8/4P1bp/pk6/1p6/4r3/1P2n3/r5PP/2R4K w - - 0 33");
 
             Add("\r\n1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5 6.Nxf7 Kxf7 7.Qf3+ Ke6 8.Nc3 Nb4", "r1bq1b1r/ppp3pp/4k3/3np3/1nB5/2N2Q2/PPPP1PPP/R1B1K2R w KQ - 4 9");
+
+            Add("[White \"Paul Morphy\"]\r\n[Black \"Duke Karl / Count Isouard\"]\r\n[FEN \"1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17\"]\r\n[SetUp \"1\"]\r\n\r\n17.Rd8# 1-0", "1n1Rkb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2K5 b k - 1 17");
         }
     }
 
@@ -110,6 +112,14 @@ namespace ChessDotNet.Tests.TestData
             Add("\r\n[White \"Paul Morphy\"]\r\n[Black \"Duke Karl / Count Isouard\"]\r\n[fEn \"1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17\"]\r\n\r\n17.Rd8# 1-0");
 
             Add("\r\n[White \"Paul Morphy\"]\r\n[Black \"Duke Karl / Count Isouard\"]\r\n[fEn \"1n2kb1r/p4XXX/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17\"]\r\n\r\n17.Rd8# 1-0");
+        }
+    }
+
+    public class LoadPgnStrictTrueInvalidFenTestData : TheoryData<string>
+    {
+        public LoadPgnStrictTrueInvalidFenTestData()
+        {
+            Add("[White \"Paul Morphy\"]\r\n[Black \"Duke Karl / Count Isouard\"]\r\n[FEN \"1n2kb1r/p4XXX/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17\"]\r\n[SetUp \"1\"]\r\n\r\n17.Rd8# 1-0");
         }
     }
 }

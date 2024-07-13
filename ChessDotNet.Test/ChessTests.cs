@@ -220,6 +220,15 @@ namespace ChessDotNet.Tests
             Assert.Throws<InvalidPgnMoveException>(() => chess.LoadPgn(pgn, true));
         }
 
+        [Theory]
+        [ClassData(typeof(LoadPgnStrictTrueInvalidFenTestData))]
+        public void LoadPgn_InputPgnStrictMode_ThrowsFenValidationException(string pgn)
+        {
+            var chess = new Chess();
+
+            Assert.Throws<FenValidationException>(() => chess.LoadPgn(pgn, true));
+        }
+
         #endregion
 
         #region Fen
