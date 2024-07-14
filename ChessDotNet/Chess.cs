@@ -15,6 +15,8 @@ namespace ChessDotNet
 
         private ChessPiece?[] _board = new ChessPiece?[128];
 
+        private readonly List<PgnHeader> _headers = new();
+
         private readonly Stack<ChessHistory> _history = new();
 
         private Dictionary<ChessColor, int> _kings = new()
@@ -28,7 +30,6 @@ namespace ChessDotNet
             { ChessColor.Black, 0},
         };
         private Dictionary<string, string> _comments = new();
-        private readonly Dictionary<string, string> _headers = new();
         private readonly Dictionary<string, int> _positionCount = new();
 
         public Chess(string fen = PublicData.DefaultChessPosition)
@@ -127,8 +128,8 @@ namespace ChessDotNet
             if (!preserveHeaders)
                 _headers.Clear();
 
-            _headers.Remove("SetUp");
-            _headers.Remove("FEN");
+            _headers.RemoveAll(h => h.Key == "SetUp");
+            _headers.RemoveAll(h => h.Key == "FEN");
         }
 
         public string Fen()
@@ -287,11 +288,25 @@ namespace ChessDotNet
             return null;
         }
 
-        public void SetHeader(PngHeader pngHeader) => _headers[pngHeader.Key] = pngHeader.Value;
+        public void SetHeader(PgnHeader pgnHeader)
+        {
+            var matchedHeader = _headers.FirstOrDefault(h => h == pgnHeader);
+            if (matchedHeader == null)
+                _headers.Add(pgnHeader);
+            else
+                matchedHeader.Value = pgnHeader.Value;
+        }
 
-        public PngHeader[] GetHeaders() => _headers.Select(kv => new PngHeader(kv.Key, kv.Value)).ToArray();
+        public PgnHeader[] GetHeaders() => _headers.Select(kv => new PgnHeader(kv.Key, kv.Value)).ToArray();
 
-        public bool RemoveHeader(string key) => _headers.Remove(key);
+        public bool RemoveHeader(string key)
+        {
+            var matchedHeader = _headers.FirstOrDefault(h => h.Key == key);
+            if (matchedHeader == null)
+                return false;
+
+            return _headers.Remove(matchedHeader);
+        }
 
         public BoardItem?[][] Board()
         {
@@ -454,7 +469,7 @@ namespace ChessDotNet
                 if (key.ToLower() == "fen")
                     fen = headers[key];
 
-                SetHeader(new PngHeader(key, headers[key]));
+                SetHeader(new PgnHeader(key, headers[key]));
             }
 
             if (!strict)
@@ -524,8 +539,8 @@ namespace ChessDotNet
                 }
             }
 
-            if (result != string.Empty && _headers.Count > 0 && !_headers.ContainsKey("Result"))
-                SetHeader(new PngHeader("Result", result));
+            if (result != string.Empty && _headers.Count > 0 && _headers.Count(h => h.Key == "Result") == 0)
+                SetHeader(new Public.PgnHeader("Result", result));
             Dictionary<string, string> ParsePgnHeader(string header)
             {
                 var headerObj = new Dictionary<string, string>();
@@ -810,13 +825,22 @@ namespace ChessDotNet
 
             if (fen != PublicData.DefaultChessPosition)
             {
-                _headers["SetUp"] = "1";
-                _headers["FEN"] = fen;
+                var setupHeader = _headers.FirstOrDefault(h => h.Key == "SetUp");
+                if (setupHeader == null)
+                    _headers.Add(new PgnHeader("SetUp", "1"));
+                else
+                    setupHeader.Value = "1";
+
+                var fenHeader = _headers.FirstOrDefault(h => h.Key == "FEN");
+                if (fenHeader == null)
+                    _headers.Add(new PgnHeader("FEN", fen));
+                else
+                    fenHeader.Value = fen;
             }
             else
             {
-                _headers.Remove("SetUp");
-                _headers.Remove("FEN");
+                _headers.RemoveAll(h => h.Key == "SetUp");
+                _headers.RemoveAll(h => h.Key == "FEN");
             }
         }
 

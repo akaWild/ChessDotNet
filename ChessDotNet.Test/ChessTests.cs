@@ -14,12 +14,26 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Magnus Carlsen"));
+            chess.SetHeader(new PgnHeader("White", "Magnus Carlsen"));
 
             var headers = chess.GetHeaders();
 
             Assert.Collection(headers,
-                header => Assert.Equal(header, new PngHeader("White", "Magnus Carlsen")));
+                header => Assert.Equal(header, new PgnHeader("White", "Magnus Carlsen")));
+        }
+
+        [Fact]
+        public void GetHeaders_Input2EqualHeaders_ReturnsArrayWith1Header()
+        {
+            var chess = new Chess();
+
+            chess.SetHeader(new PgnHeader("White", "Magnus Carlsen"));
+            chess.SetHeader(new PgnHeader("White", "Magnus Carlsen"));
+
+            var headers = chess.GetHeaders();
+
+            Assert.Collection(headers,
+                header => Assert.Equal(header, new PgnHeader("White", "Magnus Carlsen")));
         }
 
         [Fact]
@@ -27,14 +41,14 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             var headers = chess.GetHeaders();
 
             Assert.Collection(headers,
-                header => Assert.Equal(header, new PngHeader("White", "Viswanathan Anand")),
-                header => Assert.Equal(header, new PngHeader("Black", "Garry Kasparov"))
+                header => Assert.Equal(header, new PgnHeader("White", "Viswanathan Anand")),
+                header => Assert.Equal(header, new PgnHeader("Black", "Garry Kasparov"))
                 );
         }
 
@@ -58,8 +72,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             var removeResult = chess.RemoveHeader("Black");
 
@@ -71,8 +85,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             var removeResult = chess.RemoveHeader("Blue");
 
@@ -136,8 +150,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             chess.Load(PublicData.DefaultChessPosition);
 
@@ -151,16 +165,16 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             chess.Load(PublicData.DefaultChessPosition, preserveHeaders: true);
 
             var headers = chess.GetHeaders();
 
             Assert.Collection(headers,
-                header => Assert.Equal(header, new PngHeader("White", "Viswanathan Anand")),
-                header => Assert.Equal(header, new PngHeader("Black", "Garry Kasparov"))
+                header => Assert.Equal(header, new PgnHeader("White", "Viswanathan Anand")),
+                header => Assert.Equal(header, new PgnHeader("Black", "Garry Kasparov"))
             );
         }
 
@@ -328,8 +342,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             chess.Clear();
 
@@ -344,8 +358,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.SetHeader(new PngHeader("White", "Viswanathan Anand"));
-            chess.SetHeader(new PngHeader("Black", "Garry Kasparov"));
+            chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
+            chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
             chess.Clear(true);
 
@@ -353,8 +367,8 @@ namespace ChessDotNet.Tests
 
             Assert.Equal("8/8/8/8/8/8/8/8 w - - 0 1", chess.Fen());
             Assert.Collection(headers,
-                header => Assert.Equal(header, new PngHeader("White", "Viswanathan Anand")),
-                header => Assert.Equal(header, new PngHeader("Black", "Garry Kasparov"))
+                header => Assert.Equal(header, new PgnHeader("White", "Viswanathan Anand")),
+                header => Assert.Equal(header, new PgnHeader("Black", "Garry Kasparov"))
             );
         }
 
