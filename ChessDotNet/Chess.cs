@@ -550,7 +550,7 @@ namespace ChessDotNet
 
             string ToHex(string s)
             {
-                var output = string.Concat(s.Select(c => c < 128 ? Uri.HexEscape(c) : Uri.EscapeDataString($"{c}").Replace("%", "").ToLower()));
+                var output = string.Concat(s.Select(c => c < 256 ? Uri.HexEscape(c) : Uri.EscapeDataString($"{c}")));
 
                 return output;
             }
@@ -563,7 +563,7 @@ namespace ChessDotNet
                 var matches = Regex.Matches(s, @".{1,2}");
                 var input = matches.Count > 0 ? string.Join("", matches.Select(m => m.Value)) : string.Empty;
 
-                return Uri.UnescapeDataString($"%{input}");
+                return Uri.UnescapeDataString($"{input}");
             }
 
             string EncodeComment(string s)
