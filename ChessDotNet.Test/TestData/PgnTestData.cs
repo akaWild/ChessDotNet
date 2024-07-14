@@ -32,7 +32,7 @@
                 "Steve Bragg",
                 "GreatestGameEverPlayed?",
                 "True"
-            }, 19, "<br />", "TestData\\Pgn\\0.txt", null, "8/8/8/4Q3/2P1R1k1/8/5PKP/8 b - - 4 39");
+            }, 19, "<br />", Path.Combine("TestData", "Pgn", "0.txt"), null, "8/8/8/4Q3/2P1R1k1/8/5PKP/8 b - - 4 39");
 
             Add("c4 e6 Nf3 d5 d4 Nf6 Nc3 Be7 Bg5 O-O e3 h6 Bh4 b6 cxd5 Nxd5 Bxe7 Qxe7 Nxd5 exd5 Rc1 Be6 Qa4 c5 Qa3 Rc8 Bb5 a6 dxc5 bxc5 O-O Ra7 Be2 Nd7 Nd4 Qf8 Nxe6 fxe6 e4 d4 f4 Qe7 e5 Rb8 Bc4 Kh8 Qh3 Nf8 b3 a5 f5 exf5 Rxf5 Nh7 Rcf1 Qd8 Qg3 Re7 h4 Rbb7 e6 Rbc7 Qe5 Qe8 a4 Qd8 R1f2 Qe8 R2f3 Qd8 Bd3 Qe8 Qe4 Nf6 Rxf6 gxf6 Rxf6 Kg8 Bc4 Kh8 Qf4", new[]
             {
@@ -60,11 +60,11 @@
                 "?",
                 "PlyCount",
                 "81",
-            }, 65, null, "TestData\\Pgn\\1.txt", null, "4q2k/2r1r3/4PR1p/p1p5/P1Bp1Q1P/1P6/6P1/6K1 b - - 4 41");
+            }, 65, null, Path.Combine("TestData", "Pgn", "1.txt"), null, "4q2k/2r1r3/4PR1p/p1p5/P1Bp1Q1P/1P6/6P1/6K1 b - - 4 41");
 
-            Add("f3 e5 g4 Qh4#", new string[] { }, 1, null, "TestData\\Pgn\\2.txt", null, "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3");
+            Add("f3 e5 g4 Qh4#", new string[] { }, 1, null, Path.Combine("TestData", "Pgn", "2.txt"), null, "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3");
 
-            Add("Ba5 O-O d6 d4", new string[] { }, 20, null, "TestData\\Pgn\\3.txt", "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 1", "r1bqk1nr/ppp2ppp/2np4/b3p3/2BPP3/2P2N2/P4PPP/RNBQ1RK1 b kq - 0 3");
+            Add("Ba5 O-O d6 d4", new string[] { }, 20, null, Path.Combine("TestData", "Pgn", "3.txt"), "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 1", "r1bqk1nr/ppp2ppp/2np4/b3p3/2BPP3/2P2N2/P4PPP/RNBQ1RK1 b kq - 0 3");
         }
     }
 }
