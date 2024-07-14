@@ -27,8 +27,8 @@ namespace ChessDotNet
             { ChessColor.White, 0},
             { ChessColor.Black, 0},
         };
+        private Dictionary<string, string> _comments = new();
         private readonly Dictionary<string, string> _headers = new();
-        private readonly Dictionary<string, string> _comments = new();
         private readonly Dictionary<string, int> _positionCount = new();
 
         public Chess(string fen = PublicData.DefaultChessPosition)
@@ -624,6 +624,39 @@ namespace ChessDotNet
             UpdateSetup(Fen());
 
             return piece;
+        }
+
+        public string? GetComment()
+        {
+            var fen = Fen();
+
+            if (_comments.TryGetValue(fen, out var comment))
+                return comment;
+
+            return null;
+        }
+
+        public void SetComment(string comment) => _comments[Fen()] = comment.Replace('{', '[').Replace('}', ']');
+
+        public bool DeleteComment()
+        {
+            var fen = Fen();
+
+            return _comments.Remove(fen);
+        }
+
+        public CommentInfo[] GetComments()
+        {
+            PruneComments();
+
+            return _comments.Select(kv => new CommentInfo(kv.Key, kv.Value)).ToArray();
+        }
+
+        public void DeleteComments()
+        {
+            PruneComments();
+
+            _comments.Clear();
         }
 
         public int Perft(int depth)
@@ -1432,6 +1465,37 @@ namespace ChessDotNet
             }
 
             return legalMoves;
+        }
+
+        private void PruneComments()
+        {
+            var reversedHistory = new Stack<InternalMove?>();
+            var currentComments = new Dictionary<string, string>();
+
+            while (_history.Count > 0)
+                reversedHistory.Push(UndoMove());
+
+            CopyComment(Fen());
+
+            while (true)
+            {
+                if (reversedHistory.Count == 0)
+                    break;
+
+                var move = reversedHistory.Pop();
+                if (move == null)
+                    break;
+
+                MakeMove(move);
+                CopyComment(Fen());
+            }
+
+            _comments = currentComments;
+            void CopyComment(string fen)
+            {
+                if (_comments.TryGetValue(fen, out var comment))
+                    currentComments[fen] = comment;
+            }
         }
 
         private void UpdateCastlingRights()

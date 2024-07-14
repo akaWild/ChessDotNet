@@ -689,6 +689,187 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region Comments
+
+        [Theory]
+        [ClassData(typeof(CommentsPgnTestData))]
+        public void GetComments_LoadPgn_ReturnsCorrectComments(string pgn, CommentInfo[] expectedComments)
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn(pgn);
+
+            var actualComments = chess.GetComments();
+
+            Assert.Equal(expectedComments.Length, actualComments.Length);
+
+            foreach (var comment in expectedComments)
+                Assert.Contains(comment, actualComments);
+        }
+
+        [Fact]
+        public void Comments_NoComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            Assert.Null(chess.GetComment());
+            Assert.Empty(chess.GetComments());
+
+            chess.Move("e4");
+
+            Assert.Null(chess.GetComment());
+            Assert.Empty(chess.GetComments());
+        }
+
+        [Fact]
+        public void Comments_CommentForInitialPosition_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.SetComment("Starting position");
+
+            Assert.Equal("Starting position", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Starting position")));
+        }
+
+        [Fact]
+        public void Comments_CommentForFirstMove_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+
+            var e4 = chess.Fen();
+
+            chess.SetComment("Good move");
+
+            Assert.Equal("Good move", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(e4, "Good move")));
+
+            chess.Move("e5");
+
+            Assert.Null(chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(e4, "Good move")));
+        }
+
+        [Fact]
+        public void Comments_CommentForLastMove_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.Move("e6");
+            chess.SetComment("Dubious move");
+
+            Assert.Equal("Dubious move", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Dubious move")));
+        }
+
+        [Fact]
+        public void Comments_CommentWithBrackets_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.SetComment("{Starting position}");
+
+            Assert.Equal("[Starting position]", chess.GetComment());
+        }
+
+        [Fact]
+        public void Comments_CommentsWithManyMoves_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            var initFen = chess.Fen();
+
+            chess.SetComment("Starting position");
+
+            Assert.Equal("Starting position", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(initFen, "Starting position")));
+
+            chess.Move("e4");
+
+            var e4 = chess.Fen();
+
+            chess.SetComment("Good move");
+
+            Assert.Equal("Good move", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(initFen, "Starting position")), item => Assert.Equal(item, new CommentInfo(e4, "Good move")));
+
+            chess.Move("e6");
+
+            var e6 = chess.Fen();
+
+            chess.SetComment("Dubious move");
+
+            Assert.Equal("Dubious move", chess.GetComment());
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(initFen, "Starting position")), item => Assert.Equal(item, new CommentInfo(e4, "Good move")), item => Assert.Equal(item, new CommentInfo(e6, "Dubious move")));
+        }
+
+        [Fact]
+        public void Comments_DeleteComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            Assert.False(chess.DeleteComment());
+
+            var initFen = chess.Fen();
+
+            chess.SetComment("Starting position");
+            chess.Move("e4");
+
+            var e4 = chess.Fen();
+
+            chess.SetComment("Good move");
+            chess.Move("e6");
+
+            var e6 = chess.Fen();
+
+            chess.SetComment("Dubious move");
+
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(initFen, "Starting position")), item => Assert.Equal(item, new CommentInfo(e4, "Good move")), item => Assert.Equal(item, new CommentInfo(e6, "Dubious move")));
+
+            Assert.True(chess.DeleteComment());
+            Assert.False(chess.DeleteComment());
+        }
+
+        [Fact]
+        public void Comments_PruneComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.SetComment("Tactical");
+            chess.Undo();
+            chess.Move("d4");
+            chess.SetComment("Positional");
+
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Positional")));
+        }
+
+        [Fact]
+        public void Comments_ClearComments_ReturnsCorrectData()
+        {
+            Test(chess => chess.Reset());
+            Test(chess => chess.Clear());
+            Test(chess => chess.Load(chess.Fen()));
+            void Test(Action<Chess> action)
+            {
+                var chess = new Chess();
+
+                chess.Move("e4");
+                chess.SetComment("Good move");
+
+                Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Good move")));
+
+                action(chess);
+
+                Assert.Empty(chess.GetComments());
+            }
+        }
+
+        #endregion
+
         #region Perft
 
         [Theory]
