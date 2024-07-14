@@ -446,7 +446,7 @@ namespace ChessDotNet
 
             Reset();
 
-            var headers = parsePgnHeader(headerString);
+            var headers = ParsePgnHeader(headerString);
             var fen = string.Empty;
 
             foreach (var key in headers.Keys)
@@ -526,7 +526,7 @@ namespace ChessDotNet
 
             if (result != string.Empty && _headers.Count > 0 && !_headers.ContainsKey("Result"))
                 SetHeader(new PngHeader("Result", result));
-            Dictionary<string, string> parsePgnHeader(string header)
+            Dictionary<string, string> ParsePgnHeader(string header)
             {
                 var headerObj = new Dictionary<string, string>();
                 var headers = Regex.Split(header, "\r?\n");
