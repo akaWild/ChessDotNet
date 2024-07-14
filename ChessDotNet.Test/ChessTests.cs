@@ -123,7 +123,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            Assert.Throws<FenValidationException>(() => chess.Load(fen));
+            Assert.Throws<FenValidationException>(() => chess.LoadFen(fen));
         }
 
         [Fact]
@@ -133,7 +133,7 @@ namespace ChessDotNet.Tests
 
             var fen = "1nbqkbn1/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/1NBQ1BN1 b - - 1 2";
 
-            Assert.Null(Record.Exception(() => chess.Load(fen, skipValidation: true)));
+            Assert.Null(Record.Exception(() => chess.LoadFen(fen, skipValidation: true)));
         }
 
         [Theory]
@@ -142,7 +142,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            Assert.Null(Record.Exception(() => chess.Load(fen)));
+            Assert.Null(Record.Exception(() => chess.LoadFen(fen)));
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace ChessDotNet.Tests
             chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
             chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
-            chess.Load(PublicData.DefaultChessPosition);
+            chess.LoadFen(PublicData.DefaultChessPosition);
 
             var headers = chess.GetHeaders();
 
@@ -168,7 +168,7 @@ namespace ChessDotNet.Tests
             chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
             chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
-            chess.Load(PublicData.DefaultChessPosition, preserveHeaders: true);
+            chess.LoadFen(PublicData.DefaultChessPosition, preserveHeaders: true);
 
             var headers = chess.GetHeaders();
 
@@ -191,7 +191,7 @@ namespace ChessDotNet.Tests
             chess.LoadPgn(pgn);
 
             if (fen != null)
-                Assert.Equal(fen, chess.Fen());
+                Assert.Equal(fen, chess.GetFen());
             else
                 Assert.Null(Record.Exception(() => chess.LoadPgn(pgn)));
         }
@@ -222,7 +222,7 @@ namespace ChessDotNet.Tests
 
             chess.LoadPgn(pgn, true);
 
-            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(fen, chess.GetFen());
         }
 
         [Theory]
@@ -252,7 +252,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            var fen = chess.Fen();
+            var fen = chess.GetFen();
 
             Assert.Equal(PublicData.DefaultChessPosition, fen);
         }
@@ -263,7 +263,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(fen, chess.GetFen());
         }
 
         [Theory]
@@ -274,7 +274,7 @@ namespace ChessDotNet.Tests
 
             chess.Move(move);
 
-            Assert.Equal(outputFen, chess.Fen());
+            Assert.Equal(outputFen, chess.GetFen());
         }
 
         #endregion
@@ -289,7 +289,7 @@ namespace ChessDotNet.Tests
 
             chess.LoadPgn(inputPgn);
 
-            Assert.Equal(outputPgn, chess.Pgn());
+            Assert.Equal(outputPgn, chess.GetPgn());
         }
 
         [Theory]
@@ -299,19 +299,19 @@ namespace ChessDotNet.Tests
             var chess = new Chess();
 
             if (startingPosition != null)
-                chess.Load(startingPosition);
+                chess.LoadFen(startingPosition);
 
             foreach (var move in moves.Split())
                 chess.Move(move);
 
-            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(fen, chess.GetFen());
 
             for (var i = 0; i < headers.Length; i += 2)
                 chess.SetHeader(new PgnHeader(headers[i], headers[i + 1]));
 
             var pgn = File.ReadAllText(pgnFile).Trim();
 
-            Assert.Equal(pgn, chess.Pgn(newLine ?? Environment.NewLine, maxWidth));
+            Assert.Equal(pgn, chess.GetPgn(newLine ?? Environment.NewLine, maxWidth));
         }
 
         [Fact]
@@ -321,7 +321,7 @@ namespace ChessDotNet.Tests
 
             chess.Move("e4");
 
-            Assert.Equal("1. e4", chess.Pgn());
+            Assert.Equal("1. e4", chess.GetPgn());
         }
 
         [Fact]
@@ -331,7 +331,7 @@ namespace ChessDotNet.Tests
 
             chess.SetComment("Starting position");
 
-            Assert.Equal("{Starting position}", chess.Pgn());
+            Assert.Equal("{Starting position}", chess.GetPgn());
         }
 
         [Fact]
@@ -343,7 +343,7 @@ namespace ChessDotNet.Tests
             chess.SetComment("Good move");
             chess.Move("e5");
 
-            Assert.Equal("1. e4 {Good move} e5", chess.Pgn());
+            Assert.Equal("1. e4 {Good move} e5", chess.GetPgn());
         }
 
         [Fact]
@@ -355,7 +355,7 @@ namespace ChessDotNet.Tests
             chess.Move("e6");
             chess.SetComment("Dubious move");
 
-            Assert.Equal("1. e4 e6 {Dubious move}", chess.Pgn());
+            Assert.Equal("1. e4 e6 {Dubious move}", chess.GetPgn());
         }
 
         [Fact]
@@ -365,17 +365,17 @@ namespace ChessDotNet.Tests
 
             chess.SetComment("Starting position");
 
-            Assert.Equal("{Starting position}", chess.Pgn());
+            Assert.Equal("{Starting position}", chess.GetPgn());
 
             chess.Move("e4");
             chess.SetComment("Good move");
 
-            Assert.Equal("{Starting position} 1. e4 {Good move}", chess.Pgn());
+            Assert.Equal("{Starting position} 1. e4 {Good move}", chess.GetPgn());
 
             chess.Move("e6");
             chess.SetComment("Dubious move");
 
-            Assert.Equal("{Starting position} 1. e4 {Good move} e6 {Dubious move}", chess.Pgn());
+            Assert.Equal("{Starting position} 1. e4 {Good move} e6 {Dubious move}", chess.GetPgn());
         }
 
         [Fact]
@@ -391,11 +391,11 @@ namespace ChessDotNet.Tests
 
             chess.DeleteComment();
 
-            Assert.Equal("{Starting position} 1. e4 {Good move} e6", chess.Pgn());
+            Assert.Equal("{Starting position} 1. e4 {Good move} e6", chess.GetPgn());
 
             chess.DeleteComments();
 
-            Assert.Equal("1. e4 e6", chess.Pgn());
+            Assert.Equal("1. e4 e6", chess.GetPgn());
         }
 
         [Fact]
@@ -409,7 +409,7 @@ namespace ChessDotNet.Tests
             chess.Move("d4");
             chess.SetComment("Positional");
 
-            Assert.Equal("1. d4 {Positional}", chess.Pgn());
+            Assert.Equal("1. d4 {Positional}", chess.GetPgn());
         }
 
         [Fact]
@@ -422,14 +422,14 @@ namespace ChessDotNet.Tests
             chess.Move("e5");
             chess.SetComment("Classical response");
 
-            Assert.Equal("1. e4 {Good   move} e5 {Classical response}", chess.Pgn());
+            Assert.Equal("1. e4 {Good   move} e5 {Classical response}", chess.GetPgn());
             Assert.Equal(string.Join("\n", new string[]
             {
                 "1. e4 {Good",
                 "move} e5",
                 "{Classical",
                 "response}"
-            }), chess.Pgn(maxWidth: 16, newLine: "\n"));
+            }), chess.GetPgn(maxWidth: 16, newLine: "\n"));
             Assert.Equal(string.Join("\n", new string[]
             {
                 "1.",
@@ -439,7 +439,7 @@ namespace ChessDotNet.Tests
                 "e5",
                 "{Classical",
                 "response}"
-            }), chess.Pgn(maxWidth: 2, newLine: "\n"));
+            }), chess.GetPgn(maxWidth: 2, newLine: "\n"));
         }
 
         #endregion
@@ -472,7 +472,7 @@ namespace ChessDotNet.Tests
 
             var outputMove = chess.Move(move);
 
-            Assert.Equal(outputFen, chess.Fen());
+            Assert.Equal(outputFen, chess.GetFen());
 
             Assert.Equal(moveResult.From, outputMove.From.ToString());
             Assert.Equal(moveResult.To, outputMove.To.ToString());
@@ -495,7 +495,7 @@ namespace ChessDotNet.Tests
 
             chess.Move(move);
 
-            Assert.Equal(outputFen, chess.Fen());
+            Assert.Equal(outputFen, chess.GetFen());
         }
 
         #endregion
@@ -510,11 +510,11 @@ namespace ChessDotNet.Tests
             chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
             chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
-            chess.Clear();
+            chess.ClearBoard();
 
             var headers = chess.GetHeaders();
 
-            Assert.Equal("8/8/8/8/8/8/8/8 w - - 0 1", chess.Fen());
+            Assert.Equal("8/8/8/8/8/8/8/8 w - - 0 1", chess.GetFen());
             Assert.Empty(headers);
         }
 
@@ -526,11 +526,11 @@ namespace ChessDotNet.Tests
             chess.SetHeader(new PgnHeader("White", "Viswanathan Anand"));
             chess.SetHeader(new PgnHeader("Black", "Garry Kasparov"));
 
-            chess.Clear(true);
+            chess.ClearBoard(true);
 
             var headers = chess.GetHeaders();
 
-            Assert.Equal("8/8/8/8/8/8/8/8 w - - 0 1", chess.Fen());
+            Assert.Equal("8/8/8/8/8/8/8/8 w - - 0 1", chess.GetFen());
             Assert.Collection(headers,
                 header => Assert.Equal(header, new PgnHeader("White", "Viswanathan Anand")),
                 header => Assert.Equal(header, new PgnHeader("Black", "Garry Kasparov"))
@@ -561,7 +561,7 @@ namespace ChessDotNet.Tests
                 "     a  b  c  d  e  f  g  h"
             };
 
-            Assert.Equal(string.Join("\n", outputTable), chess.Ascii());
+            Assert.Equal(string.Join("\n", outputTable), chess.ToAscii());
         }
 
         #endregion
@@ -574,7 +574,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            var boardItemsActual = chess.Board();
+            var boardItemsActual = chess.GetBoard();
 
             for (int i = 0; i < boardItemsExpected.GetLength(0); i++)
             {
@@ -598,7 +598,7 @@ namespace ChessDotNet.Tests
 
             var history = chess.GetHistory();
 
-            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(fen, chess.GetFen());
             Assert.Equal(history.Length, moves.Length);
 
             foreach (var move in moves)
@@ -616,7 +616,7 @@ namespace ChessDotNet.Tests
 
             var history = chess.GetHistoryVerbose();
 
-            Assert.Equal(fen, chess.Fen());
+            Assert.Equal(fen, chess.GetFen());
             Assert.Equal(history.Length, moves.Length);
 
             foreach (var move in moves)
@@ -650,7 +650,7 @@ namespace ChessDotNet.Tests
             var chess = new Chess(fen);
 
             for (var i = 0; i < PublicData.Squares.Length; i++)
-                Assert.Equal(chess.Attackers(PublicData.Squares[i], color).Length, counts[i]);
+                Assert.Equal(chess.GetAttackers(PublicData.Squares[i], color).Length, counts[i]);
         }
 
         [Theory]
@@ -659,7 +659,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            var attackerSquaresActual = chess.Attackers(square, color);
+            var attackerSquaresActual = chess.GetAttackers(square, color);
 
             Assert.Equal(attackerSquaresExpected.Length, attackerSquaresActual.Length);
 
@@ -676,7 +676,7 @@ namespace ChessDotNet.Tests
             foreach (var move in moves)
                 chess.Move(move);
 
-            var attackerSquaresActual = chess.Attackers(square, color);
+            var attackerSquaresActual = chess.GetAttackers(square, color);
 
             Assert.Equal(attackerSquaresExpected.Length, attackerSquaresActual.Length);
 
@@ -695,7 +695,7 @@ namespace ChessDotNet.Tests
             var chess = new Chess(fen);
 
             if (clear)
-                chess.Clear();
+                chess.ClearBoard();
 
             var setActualResult = chess.SetCastlingRights(color, castlingRights);
 
@@ -719,7 +719,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            Assert.Equal(piece, chess.Get(square));
+            Assert.Equal(piece, chess.GetPiece(square));
         }
 
         #endregion
@@ -730,30 +730,30 @@ namespace ChessDotNet.Tests
         public void Put_Put2WhiteKingsOnEmptyBoard_ReturnsTrueAndFalse()
         {
             var chess = new Chess();
-            chess.Clear();
+            chess.ClearBoard();
 
-            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
-            Assert.False(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a3")));
+            Assert.True(chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+            Assert.False(chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a3")));
         }
 
         [Fact]
         public void Put_Put2BlackKingsOnEmptyBoard_ReturnsTrueAndFalse()
         {
             var chess = new Chess();
-            chess.Clear();
+            chess.ClearBoard();
 
-            Assert.True(chess.Put(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("e8")));
-            Assert.False(chess.Put(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("d8")));
+            Assert.True(chess.PutPiece(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("e8")));
+            Assert.False(chess.PutPiece(new ChessPiece(ChessColor.Black, ChessPieceType.King), new ChessSquare("d8")));
         }
 
         [Fact]
         public void Put_Put2WhiteKingsOnEmptyBoardOnSameSquare_ReturnsTrueAndTrue()
         {
             var chess = new Chess();
-            chess.Clear();
+            chess.ClearBoard();
 
-            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
-            Assert.True(chess.Put(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+            Assert.True(chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
+            Assert.True(chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.King), new ChessSquare("a2")));
         }
 
         [Theory]
@@ -762,7 +762,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            chess.Put(piece, square);
+            chess.PutPiece(piece, square);
 
             var movesActual = chess.GetMoves();
 
@@ -825,8 +825,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            Assert.Equal(new ChessPiece(ChessColor.White, ChessPieceType.Queen), chess.Remove(new ChessSquare("d1")));
-            Assert.Null(chess.Get(new ChessSquare("d1")));
+            Assert.Equal(new ChessPiece(ChessColor.White, ChessPieceType.Queen), chess.RemovePiece(new ChessSquare("d1")));
+            Assert.Null(chess.GetPiece(new ChessSquare("d1")));
         }
 
         [Fact]
@@ -834,7 +834,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            Assert.Null(chess.Remove(new ChessSquare("e4")));
+            Assert.Null(chess.RemovePiece(new ChessSquare("e4")));
         }
 
         [Theory]
@@ -843,7 +843,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess(fen);
 
-            chess.Remove(square);
+            chess.RemovePiece(square);
 
             var movesActual = chess.GetMoves();
 
@@ -860,10 +860,10 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.Clear();
+            chess.ClearBoard();
             chess.Reset();
 
-            Assert.Equal(PublicData.DefaultChessPosition, chess.Fen());
+            Assert.Equal(PublicData.DefaultChessPosition, chess.GetFen());
         }
 
         #endregion
@@ -908,7 +908,7 @@ namespace ChessDotNet.Tests
             chess.SetComment("Starting position");
 
             Assert.Equal("Starting position", chess.GetComment());
-            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Starting position")));
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.GetFen(), "Starting position")));
         }
 
         [Fact]
@@ -918,7 +918,7 @@ namespace ChessDotNet.Tests
 
             chess.Move("e4");
 
-            var e4 = chess.Fen();
+            var e4 = chess.GetFen();
 
             chess.SetComment("Good move");
 
@@ -941,7 +941,7 @@ namespace ChessDotNet.Tests
             chess.SetComment("Dubious move");
 
             Assert.Equal("Dubious move", chess.GetComment());
-            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Dubious move")));
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.GetFen(), "Dubious move")));
         }
 
         [Fact]
@@ -959,7 +959,7 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            var initFen = chess.Fen();
+            var initFen = chess.GetFen();
 
             chess.SetComment("Starting position");
 
@@ -968,7 +968,7 @@ namespace ChessDotNet.Tests
 
             chess.Move("e4");
 
-            var e4 = chess.Fen();
+            var e4 = chess.GetFen();
 
             chess.SetComment("Good move");
 
@@ -977,7 +977,7 @@ namespace ChessDotNet.Tests
 
             chess.Move("e6");
 
-            var e6 = chess.Fen();
+            var e6 = chess.GetFen();
 
             chess.SetComment("Dubious move");
 
@@ -992,17 +992,17 @@ namespace ChessDotNet.Tests
 
             Assert.False(chess.DeleteComment());
 
-            var initFen = chess.Fen();
+            var initFen = chess.GetFen();
 
             chess.SetComment("Starting position");
             chess.Move("e4");
 
-            var e4 = chess.Fen();
+            var e4 = chess.GetFen();
 
             chess.SetComment("Good move");
             chess.Move("e6");
 
-            var e6 = chess.Fen();
+            var e6 = chess.GetFen();
 
             chess.SetComment("Dubious move");
 
@@ -1023,15 +1023,15 @@ namespace ChessDotNet.Tests
             chess.Move("d4");
             chess.SetComment("Positional");
 
-            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Positional")));
+            Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.GetFen(), "Positional")));
         }
 
         [Fact]
         public void Comments_ClearComments_ReturnsCorrectData()
         {
             Test(chess => chess.Reset());
-            Test(chess => chess.Clear());
-            Test(chess => chess.Load(chess.Fen()));
+            Test(chess => chess.ClearBoard());
+            Test(chess => chess.LoadFen(chess.GetFen()));
             void Test(Action<Chess> action)
             {
                 var chess = new Chess();
@@ -1039,7 +1039,7 @@ namespace ChessDotNet.Tests
                 chess.Move("e4");
                 chess.SetComment("Good move");
 
-                Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.Fen(), "Good move")));
+                Assert.Collection(chess.GetComments(), item => Assert.Equal(item, new CommentInfo(chess.GetFen(), "Good move")));
 
                 action(chess);
 
@@ -1104,8 +1104,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.Remove(new ChessSquare("e1"));
-            chess.Remove(new ChessSquare("e8"));
+            chess.RemovePiece(new ChessSquare("e1"));
+            chess.RemovePiece(new ChessSquare("e8"));
 
             Assert.False(chess.IsCheck());
         }
@@ -1131,8 +1131,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.Remove(new ChessSquare("e1"));
-            chess.Remove(new ChessSquare("e8"));
+            chess.RemovePiece(new ChessSquare("e1"));
+            chess.RemovePiece(new ChessSquare("e8"));
 
             Assert.False(chess.IsStalemate());
         }
@@ -1207,8 +1207,8 @@ namespace ChessDotNet.Tests
         {
             var chess = new Chess();
 
-            chess.Remove(new ChessSquare("e1"));
-            chess.Remove(new ChessSquare("e8"));
+            chess.RemovePiece(new ChessSquare("e1"));
+            chess.RemovePiece(new ChessSquare("e8"));
 
             Assert.False(chess.IsCheckmate());
         }
@@ -1258,13 +1258,13 @@ namespace ChessDotNet.Tests
 
             if (isOk)
             {
-                var normalResult = chess.Get(new ChessSquare(square));
-                var implicitResult = chess.Get(square);
+                var normalResult = chess.GetPiece(new ChessSquare(square));
+                var implicitResult = chess.GetPiece(square);
 
                 Assert.Equal(normalResult, implicitResult);
             }
             else
-                Assert.Throws<InvalidChessSquareException>(() => chess.Get(square));
+                Assert.Throws<InvalidChessSquareException>(() => chess.GetPiece(square));
         }
 
         #endregion

@@ -34,10 +34,10 @@ namespace ChessDotNet
 
         public Chess(string fen = PublicData.DefaultChessPosition)
         {
-            Load(fen);
+            LoadFen(fen);
         }
 
-        public void Load(string fen, bool skipValidation = false, bool preserveHeaders = false)
+        public void LoadFen(string fen, bool skipValidation = false, bool preserveHeaders = false)
         {
             var tokens = fen.Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
@@ -60,7 +60,7 @@ namespace ChessDotNet
             var position = tokens[0];
             var square = 0;
 
-            Clear(preserveHeaders);
+            ClearBoard(preserveHeaders);
 
             foreach (var piece in position)
             {
@@ -101,7 +101,7 @@ namespace ChessDotNet
             IncPositionCount(fen);
         }
 
-        public void Clear(bool preserveHeaders = false)
+        public void ClearBoard(bool preserveHeaders = false)
         {
             _turn = ChessColor.White;
             _epSquare = InternalData.Empty;
@@ -132,7 +132,7 @@ namespace ChessDotNet
             _headers.RemoveAll(h => h.Key == "FEN");
         }
 
-        public string Fen()
+        public string GetFen()
         {
             var empty = 0;
             var fen = string.Empty;
@@ -218,7 +218,7 @@ namespace ChessDotNet
             return $"{fen} {(char)_turn} {castling} {epSquare} {_halfMoves} {_moveNumber}";
         }
 
-        public string Pgn(string newLine = "\r\n", int maxWidth = 0)
+        public string GetPgn(string newLine = "\r\n", int maxWidth = 0)
         {
             List<string> result = new List<string>();
 
@@ -321,7 +321,7 @@ namespace ChessDotNet
 
             string AppendComment(string moveString)
             {
-                _comments.TryGetValue(Fen(), out var comment);
+                _comments.TryGetValue(GetFen(), out var comment);
 
                 if (comment != null)
                 {
@@ -464,7 +464,7 @@ namespace ChessDotNet
             return _headers.Remove(matchedHeader);
         }
 
-        public BoardItem?[][] Board()
+        public BoardItem?[][] GetBoard()
         {
             var output = new List<BoardItem?[]>();
             var row = new List<BoardItem?>();
@@ -538,7 +538,7 @@ namespace ChessDotNet
             return moveHistory.ToArray();
         }
 
-        public string Ascii()
+        public string ToAscii()
         {
             var s = "   +------------------------+\n";
 
@@ -572,7 +572,7 @@ namespace ChessDotNet
             return s;
         }
 
-        public ChessSquare[] Attackers(ChessSquare square, ChessColor? attackedBy) => Attacked(attackedBy ?? _turn, InternalData.Ox88[square]);
+        public ChessSquare[] GetAttackers(ChessSquare square, ChessColor? attackedBy) => Attacked(attackedBy ?? _turn, InternalData.Ox88[square]);
 
         public bool SetCastlingRights(ChessColor color, CastlingRights castlingRights)
         {
@@ -606,7 +606,7 @@ namespace ChessDotNet
                 (_castling[color] & (int)InternalData.Sides[ChessPieceType.Queen]) != 0);
         }
 
-        public ChessPiece? Get(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
+        public ChessPiece? GetPiece(ChessSquare square) => _board[InternalData.Ox88[square]] ?? null;
 
         public void LoadPgn(string pgn, bool strict = false)
         {
@@ -631,7 +631,7 @@ namespace ChessDotNet
             if (!strict)
             {
                 if (fen != string.Empty)
-                    Load(fen, preserveHeaders: true);
+                    LoadFen(fen, preserveHeaders: true);
             }
             else
             {
@@ -640,7 +640,7 @@ namespace ChessDotNet
                     if (!headers.ContainsKey("FEN"))
                         throw new InvalidPgnException("Invalid PGN: FEN tag must be supplied with SetUp tag");
 
-                    Load(headers["FEN"], preserveHeaders: true);
+                    LoadFen(headers["FEN"], preserveHeaders: true);
                 }
             }
 
@@ -672,7 +672,7 @@ namespace ChessDotNet
 
                 if (comment != null)
                 {
-                    _comments[Fen()] = comment;
+                    _comments[GetFen()] = comment;
 
                     continue;
                 }
@@ -691,7 +691,7 @@ namespace ChessDotNet
                     result = string.Empty;
 
                     MakeMove(move);
-                    IncPositionCount(Fen());
+                    IncPositionCount(GetFen());
                 }
             }
 
@@ -753,13 +753,13 @@ namespace ChessDotNet
             }
         }
 
-        public bool Put(ChessPiece piece, ChessSquare square)
+        public bool PutPiece(ChessPiece piece, ChessSquare square)
         {
             if (Put(piece.PieceType, piece.Color, square))
             {
                 UpdateCastlingRights();
                 UpdateEnPassantSquare();
-                UpdateSetup(Fen());
+                UpdateSetup(GetFen());
 
                 return true;
             }
@@ -781,9 +781,9 @@ namespace ChessDotNet
             return moves.Select(MakePretty).ToArray();
         }
 
-        public ChessPiece? Remove(ChessSquare square)
+        public ChessPiece? RemovePiece(ChessSquare square)
         {
-            var piece = Get(square);
+            var piece = GetPiece(square);
 
             _board[InternalData.Ox88[square]] = null;
 
@@ -792,14 +792,14 @@ namespace ChessDotNet
 
             UpdateCastlingRights();
             UpdateEnPassantSquare();
-            UpdateSetup(Fen());
+            UpdateSetup(GetFen());
 
             return piece;
         }
 
         public string? GetComment()
         {
-            var fen = Fen();
+            var fen = GetFen();
 
             if (_comments.TryGetValue(fen, out var comment))
                 return comment;
@@ -807,11 +807,11 @@ namespace ChessDotNet
             return null;
         }
 
-        public void SetComment(string comment) => _comments[Fen()] = comment.Replace('{', '[').Replace('}', ']');
+        public void SetComment(string comment) => _comments[GetFen()] = comment.Replace('{', '[').Replace('}', ']');
 
         public bool DeleteComment()
         {
-            var fen = Fen();
+            var fen = GetFen();
 
             return _comments.Remove(fen);
         }
@@ -855,7 +855,7 @@ namespace ChessDotNet
             return nodes;
         }
 
-        public void Reset() => Load(PublicData.DefaultChessPosition);
+        public void Reset() => LoadFen(PublicData.DefaultChessPosition);
 
         public bool IsAttacked(ChessSquare square, ChessColor attackedBy) => Attacked(attackedBy, InternalData.Ox88[square]).Length > 0;
 
@@ -865,7 +865,7 @@ namespace ChessDotNet
 
         public bool IsStalemate() => !IsCheck() && Moves().Count == 0;
 
-        public bool IsThreefoldRepetition() => GetPositionCount(Fen()) >= 3;
+        public bool IsThreefoldRepetition() => GetPositionCount(GetFen()) >= 3;
 
         public bool IsInsufficientMaterial()
         {
@@ -942,7 +942,7 @@ namespace ChessDotNet
             return (HelperUtility.Rank(sq) + HelperUtility.File(sq)) % 2 == 0 ? ChessColor.White : ChessColor.Black;
         }
 
-        public int MoveNumber() => _moveNumber;
+        public int GetMoveNumber() => _moveNumber;
 
         public static FenValidationResult ValidateFen(string fen)
         {
@@ -1437,12 +1437,12 @@ namespace ChessDotNet
                 prettyFlags,
                 MoveToSan(uglyMove, Moves().ToArray()),
                 fromAlgebraic.ToString() + toAlgebraic,
-                Fen(),
+                GetFen(),
                 string.Empty);
 
             MakeMove(uglyMove);
 
-            move.After = Fen();
+            move.After = GetFen();
 
             UndoMove();
 
@@ -1655,7 +1655,7 @@ namespace ChessDotNet
             while (_history.Count > 0)
                 reversedHistory.Push(UndoMove());
 
-            CopyComment(Fen());
+            CopyComment(GetFen());
 
             while (true)
             {
@@ -1667,7 +1667,7 @@ namespace ChessDotNet
                     break;
 
                 MakeMove(move);
-                CopyComment(Fen());
+                CopyComment(GetFen());
             }
 
             _comments = currentComments;

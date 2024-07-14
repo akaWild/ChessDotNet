@@ -47,7 +47,7 @@ namespace ChessDotNet.Tests
 
                 chess.Move(move);
 
-                fens.Add(chess.Fen());
+                fens.Add(chess.GetFen());
             }
 
             Assert.Equal(2, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PublicData.DefaultChessPosition }) ?? -1));
@@ -65,7 +65,7 @@ namespace ChessDotNet.Tests
             chess.Move("e4");
 
             Assert.Equal(1, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PublicData.DefaultChessPosition })));
-            Assert.Equal(PositionCountFixture.E4Fen, chess.Fen());
+            Assert.Equal(PositionCountFixture.E4Fen, chess.GetFen());
             Assert.Equal(1, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PositionCountFixture.E4Fen })));
 
             chess.Undo();
@@ -81,7 +81,7 @@ namespace ChessDotNet.Tests
             var chess = new Chess();
 
             chess.Move("e4");
-            chess.Clear();
+            chess.ClearBoard();
 
             Assert.Equal(0, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PublicData.DefaultChessPosition })));
             Assert.Equal(0, (int)(((Dictionary<string, int>)_fixture.PositionCountDictionary?.GetValue(chess)).Keys.Count));
@@ -101,7 +101,7 @@ namespace ChessDotNet.Tests
 
             var newFen = "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2";
 
-            chess.Load(newFen);
+            chess.LoadFen(newFen);
 
             Assert.Equal(0, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PublicData.DefaultChessPosition })));
             Assert.Equal(0, (int)(_fixture.GetPositionCountMethod?.Invoke(chess, new object[] { PositionCountFixture.E4Fen })));
