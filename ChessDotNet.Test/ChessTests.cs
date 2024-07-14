@@ -279,6 +279,171 @@ namespace ChessDotNet.Tests
 
         #endregion
 
+        #region Pgn
+
+        [Theory]
+        [ClassData(typeof(PgnTestData))]
+        public void Pgn_LoadPgn_ReturnsCorrectOutput(string inputPgn, string outputPgn)
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn(inputPgn);
+
+            Assert.Equal(outputPgn, chess.Pgn());
+        }
+
+        [Theory]
+        [ClassData(typeof(PgnFileTestData))]
+        public void Pgn_LoadPgnFile_ReturnsCorrectOutput(string moves, string[] headers, int maxWidth, string? newLine, string pgnFile, string? startingPosition, string fen)
+        {
+            var chess = new Chess();
+
+            if (startingPosition != null)
+                chess.Load(startingPosition);
+
+            foreach (var move in moves.Split())
+                chess.Move(move);
+
+            Assert.Equal(fen, chess.Fen());
+
+            for (var i = 0; i < headers.Length; i += 2)
+                chess.SetHeader(new PgnHeader(headers[i], headers[i + 1]));
+
+            var pgn = File.ReadAllText(pgnFile).Trim();
+
+            Assert.Equal(pgn, chess.Pgn(newLine ?? "\r\n", maxWidth));
+        }
+
+        [Fact]
+        public void Pgn_NoComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+
+            Assert.Equal("1. e4", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_CommentForInitialPosition_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.SetComment("Starting position");
+
+            Assert.Equal("{Starting position}", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_CommentForFirstMove_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.SetComment("Good move");
+            chess.Move("e5");
+
+            Assert.Equal("1. e4 {Good move} e5", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_CommentForLastMove_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.Move("e6");
+            chess.SetComment("Dubious move");
+
+            Assert.Equal("1. e4 e6 {Dubious move}", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_CommentWithManyMoves_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.SetComment("Starting position");
+
+            Assert.Equal("{Starting position}", chess.Pgn());
+
+            chess.Move("e4");
+            chess.SetComment("Good move");
+
+            Assert.Equal("{Starting position} 1. e4 {Good move}", chess.Pgn());
+
+            chess.Move("e6");
+            chess.SetComment("Dubious move");
+
+            Assert.Equal("{Starting position} 1. e4 {Good move} e6 {Dubious move}", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_DeleteComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.SetComment("Starting position");
+            chess.Move("e4");
+            chess.SetComment("Good move");
+            chess.Move("e6");
+            chess.SetComment("Dubious move");
+
+            chess.DeleteComment();
+
+            Assert.Equal("{Starting position} 1. e4 {Good move} e6", chess.Pgn());
+
+            chess.DeleteComments();
+
+            Assert.Equal("1. e4 e6", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_PruneComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.SetComment("Tactical");
+            chess.Undo();
+            chess.Move("d4");
+            chess.SetComment("Positional");
+
+            Assert.Equal("1. d4 {Positional}", chess.Pgn());
+        }
+
+        [Fact]
+        public void Pgn_FormatComments_ReturnsCorrectData()
+        {
+            var chess = new Chess();
+
+            chess.Move("e4");
+            chess.SetComment("Good   move");
+            chess.Move("e5");
+            chess.SetComment("Classical response");
+
+            Assert.Equal("1. e4 {Good   move} e5 {Classical response}", chess.Pgn());
+            Assert.Equal(string.Join("\n", new string[]
+            {
+                "1. e4 {Good",
+                "move} e5",
+                "{Classical",
+                "response}"
+            }), chess.Pgn(maxWidth: 16, newLine: "\n"));
+            Assert.Equal(string.Join("\n", new string[]
+            {
+                "1.",
+                "e4",
+                "{Good",
+                "move}",
+                "e5",
+                "{Classical",
+                "response}"
+            }), chess.Pgn(maxWidth: 2, newLine: "\n"));
+        }
+
+        #endregion
+
         #region Move
 
         [Theory]

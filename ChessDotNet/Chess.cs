@@ -218,6 +218,162 @@ namespace ChessDotNet
             return $"{fen} {(char)_turn} {castling} {epSquare} {_halfMoves} {_moveNumber}";
         }
 
+        public string Pgn(string newLine = "\r\n", int maxWidth = 0)
+        {
+            List<string> result = new List<string>();
+
+            var headerExists = false;
+
+            foreach (var header in _headers)
+            {
+                result.Add($"[{header.Key} \"{header.Value}\"]{newLine}");
+
+                headerExists = true;
+            }
+
+            if (headerExists && _history.Count > 0)
+                result.Add(newLine);
+
+            var reversedHistory = new Stack<InternalMove?>();
+            while (_history.Count > 0)
+                reversedHistory.Push(UndoMove());
+
+            var moves = new List<string>();
+            var moveString = string.Empty;
+
+            if (reversedHistory.Count == 0)
+                moves.Add(AppendComment(""));
+
+            while (reversedHistory.Count > 0)
+            {
+                moveString = AppendComment(moveString);
+
+                var move = reversedHistory.Pop();
+
+                if (move == null)
+                    break;
+
+                if (_history.Count == 0 && move.Color == ChessColor.Black)
+                {
+                    var prefix = $"{_moveNumber}. ...";
+
+                    moveString = moveString != string.Empty ? $"{moveString} {prefix}" : prefix;
+                }
+                else if (move.Color == ChessColor.White)
+                {
+                    if (moveString.Length > 0)
+                        moves.Add(moveString);
+
+                    moveString = $"{_moveNumber}.";
+                }
+
+                moveString += $" {MoveToSan(move, Moves(true).ToArray())}";
+
+                MakeMove(move);
+            }
+
+            if (moveString.Length > 0)
+                moves.Add(AppendComment(moveString));
+
+            var resultHeader = _headers.FirstOrDefault(h => h.Key == "Result");
+            if (resultHeader != null)
+                moves.Add(resultHeader.Value);
+
+            if (maxWidth == 0)
+                return string.Join("", result) + string.Join(" ", moves);
+
+            var currentWidth = 0;
+
+            for (var i = 0; i < moves.Count; i++)
+            {
+                if (currentWidth + moves[i].Length > maxWidth)
+                {
+                    if (moves[i].Contains('{'))
+                    {
+                        currentWidth = WrapComment(currentWidth, moves[i]);
+
+                        continue;
+                    }
+                }
+
+                if (currentWidth + moves[i].Length > maxWidth && i != 0)
+                {
+                    if (result[^1] == " ")
+                        result.RemoveAt(result.Count - 1);
+
+                    result.Add(newLine);
+
+                    currentWidth = 0;
+                }
+                else if (i != 0)
+                {
+                    result.Add(" ");
+
+                    currentWidth++;
+                }
+
+                result.Add(moves[i]);
+
+                currentWidth += moves[i].Length;
+            }
+
+            return string.Join("", result);
+
+            string AppendComment(string moveString)
+            {
+                _comments.TryGetValue(Fen(), out var comment);
+
+                if (comment != null)
+                {
+                    var delimiter = moveString.Length > 0 ? " " : "";
+                    moveString = $"{moveString}{delimiter}{{{comment}}}";
+                }
+
+                return moveString;
+            }
+
+            bool Strip()
+            {
+                if (result.Count > 0 && result[^1] == " ")
+                {
+                    result.RemoveAt(result.Count - 1);
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            int WrapComment(int width, string move)
+            {
+                foreach (var token in move.Split(" ", StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (width + token.Length > maxWidth)
+                    {
+                        while (Strip())
+                            width--;
+
+                        result.Add(newLine);
+
+                        width = 0;
+                    }
+
+                    result.Add(token);
+
+                    width += token.Length;
+
+                    result.Add(" ");
+
+                    width++;
+                }
+
+                if (Strip())
+                    width--;
+
+                return width;
+            }
+        }
+
         public ChessMove Move(string move, bool strict = false)
         {
             var moveObj = MoveFromSan(move, strict);
@@ -492,7 +648,7 @@ namespace ChessDotNet
 
             ms = Regex.Replace(ms, @"(?<bracket>{[^}]*})+?|;(?<semicolon>([^\r?\n]*))", (match) => match.Groups["bracket"].Success
                 ? EncodeComment(match.Groups["bracket"].Value)
-                : ' ' + EncodeComment($"{{${match.Groups["bracket"].Value[1..]}}}"));
+                : ' ' + (match.Groups["semicolon"].Value == string.Empty ? "{}" : EncodeComment($"{{{match.Groups["semicolon"].Value[1..]}}}")));
 
             ms = Regex.Replace(ms, @"\r?\n", " ");
 
