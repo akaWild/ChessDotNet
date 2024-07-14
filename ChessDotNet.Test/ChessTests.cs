@@ -311,7 +311,7 @@ namespace ChessDotNet.Tests
 
             var pgn = File.ReadAllText(pgnFile).Trim();
 
-            Assert.Equal(pgn, chess.Pgn(newLine ?? "\r\n", maxWidth));
+            Assert.Equal(pgn, chess.Pgn(newLine ?? Environment.NewLine, maxWidth));
         }
 
         [Fact]
