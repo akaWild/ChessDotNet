@@ -1346,8 +1346,8 @@ namespace ChessDotNet
             if (match.Success)
             {
                 piece = match.Groups["piece"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
-                from = match.Groups["from"].Success ? match.Groups["from"].Value : null;
-                to = match.Groups["to"].Success ? new ChessSquare(match.Groups["to"].Value) : null;
+                from = match.Groups["from"].Value;
+                to = new ChessSquare(match.Groups["to"].Value);
                 promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["promotion"].Value[0]) : null;
 
                 if (from?.Length == 1)
@@ -1360,8 +1360,8 @@ namespace ChessDotNet
                 if (match.Success)
                 {
                     piece = match.Groups["piece"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
-                    from = match.Groups["from"].Success ? match.Groups["from"].Value : null;
-                    to = match.Groups["to"].Success ? new ChessSquare(match.Groups["to"].Value) : null;
+                    from = match.Groups["from"].Value;
+                    to = new ChessSquare(match.Groups["to"].Value);
                     promotion = match.Groups["promotion"].Success ? (ChessPieceType)char.ToLower(match.Groups["piece"].Value[0]) : null;
 
                     if (from?.Length == 1)
