@@ -49,7 +49,7 @@ namespace ChessDotNet.Tests
             Assert.Collection(headers,
                 header => Assert.Equal(header, new PgnHeader("White", "Viswanathan Anand")),
                 header => Assert.Equal(header, new PgnHeader("Black", "Garry Kasparov"))
-                );
+            );
         }
 
         [Fact]
@@ -816,6 +816,7 @@ namespace ChessDotNet.Tests
             foreach (var move in movesExpected)
                 Assert.Contains(move, movesActual);
         }
+
         #endregion
 
         #region Remove
@@ -1032,6 +1033,7 @@ namespace ChessDotNet.Tests
             Test(chess => chess.Reset());
             Test(chess => chess.ClearBoard());
             Test(chess => chess.LoadFen(chess.GetFen()));
+
             void Test(Action<Chess> action)
             {
                 var chess = new Chess();
@@ -1267,6 +1269,345 @@ namespace ChessDotNet.Tests
                 Assert.Throws<InvalidChessSquareException>(() => chess.GetPiece(square));
         }
 
+        #endregion
+
+        #region Misc
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest1()
+        {
+            var chess = new Chess("rnbqk2r/ppp1pp1p/5n1b/3p2pQ/1P2P3/B1N5/P1PP1PPP/R3KBNR b KQkq - 3 5");
+
+            Assert.Empty(chess.GetMovesVerbose(square: "f1"));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest2()
+        {
+            var chess = new Chess("b3k2r/5p2/4p3/1p5p/6p1/2PR2P1/BP3qNP/6QK b k - 2 28");
+
+            chess.Move(new MoveInfo("a8", "g2"));
+
+            Assert.Equal("4k2r/5p2/4p3/1p5p/6p1/2PR2P1/BP3qbP/6QK w k - 0 29", chess.GetFen());
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest3()
+        {
+            var chess = new Chess("N3k3/8/8/8/8/8/5b2/4K3 w - - 0 1");
+
+            Assert.False(chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.King), "a1"));
+
+            chess.PutPiece(new ChessPiece(ChessColor.White, ChessPieceType.Queen), "a1");
+            chess.RemovePiece("a1");
+
+            Assert.Equal("Kd2 Ke2 Kxf2 Kf1 Kd1", string.Join(" ", chess.GetMoves()));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest4()
+        {
+            var chess = new Chess();
+
+            var pgn = "[SetUp \"1\"]\r\n[FEN \"7k/5K2/4R3/8/8/8/8/8 w KQkq - 0 1\"]\r\n\r\n1. Rh6#";
+
+            chess.LoadPgn(pgn);
+
+            Assert.Equal("7k/5K2/7R/8/8/8/8/8 b KQkq - 1 1", chess.GetFen());
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest5()
+        {
+            var chess = new Chess();
+
+            var pgn = "[SetUp \"1\"]\r\n[FEN \"r4r1k/1p4b1/3p3p/5qp1/1RP5/6P1/3NP3/2Q2RKB b KQkq - 0 1\"]\r\n\r\n1. ... Qc5+";
+
+            chess.LoadPgn(pgn);
+
+            Assert.Equal("r4r1k/1p4b1/3p3p/2q3p1/1RP5/6P1/3NP3/2Q2RKB w KQkq - 1 2", chess.GetFen());
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest6()
+        {
+            var chess = new Chess();
+
+            chess.LoadFen("4r3/8/2p2PPk/1p6/pP2p1R1/P1B5/2P2K2/3r4 w - - 1 45");
+            chess.Move("f7");
+
+            var pgn = chess.GetPgn();
+
+            Assert.Matches(@"(45\. f7)$", pgn);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest7()
+        {
+            var chess = new Chess();
+
+            chess.LoadFen("4r3/8/2p2PPk/1p6/pP2p1R1/P1B5/2P2K2/3r4 b - - 1 45");
+            chess.Move("Rf1+");
+
+            var pgn = chess.GetPgn();
+
+            Assert.Matches(@"(45\. \.\.\. Rf1\+)$", pgn);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest8()
+        {
+            var chess = new Chess();
+
+            var pgn = new[]
+            {
+                "[Event \"Test Olympiad\"]",
+                "[Site \"Earth\"]",
+                "[Date \"????.??.??\"]",
+                "[Round \"6\"]",
+                "[White \"Testy\"]",
+                "[Black \"McTest\"]",
+                "[Result \"*\"]",
+                "[FEN \"rnbqkb1r/1p3ppp/p2ppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1\"]",
+                "[SetUp \"1\"]",
+                "",
+                "1.Qd2 Be7 *"
+            };
+
+            chess.LoadPgn(string.Join("\r\n", pgn));
+
+            var expectedHeaders = new[]
+            {
+                new PgnHeader("Event", "Test Olympiad"),
+                new PgnHeader("Site", "Earth"),
+                new PgnHeader("Date", "????.??.??"),
+                new PgnHeader("Round", "6"),
+                new PgnHeader("White", "Testy"),
+                new PgnHeader("Black", "McTest"),
+                new PgnHeader("Result", "*"),
+                new PgnHeader("FEN", "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1"),
+                new PgnHeader("SetUp", "1"),
+            };
+
+            var actualHeaders = chess.GetHeaders();
+
+            Assert.Equal(expectedHeaders.Length, actualHeaders.Length);
+
+            foreach (var header in expectedHeaders)
+                Assert.Contains(header, actualHeaders);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest9()
+        {
+            var chess = new Chess();
+
+            var pgn = new[]
+            {
+                "[Event \"Test Olympiad\"]",
+                "[Site \"Earth\"]",
+                "[Date \"????.??.??\"]",
+                "[Round \"6\"]",
+                "[White \"Testy\"]",
+                "[Black \"McTest\"]",
+                "[Result \"*\"]",
+                "[FEN \"rnbqkb1r/1p3ppp/p2ppn2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1\"]",
+                "[SetUp \"1\"]",
+                "",
+                "1.Qd2 Be7 *"
+            };
+
+            chess.LoadPgn(string.Join("\r\n", pgn));
+            chess.ClearBoard();
+
+            var actualHeaders = chess.GetHeaders();
+
+            Assert.Empty(actualHeaders);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest10()
+        {
+            var chess = new Chess();
+
+            var pgn = new[]
+            {
+                "[Event \"Reykjavik WCh\"]",
+                "[Site \"Reykjavik WCh\"]",
+                "[Date \"1972.01.07\" ]",
+                "[EventDate \"?\"]",
+                "[Round \"6\"]",
+                "[Result \"1-0\"]",
+                "[White \"Robert James Fischer\"]",
+                "[Black \"Boris Spassky\"]",
+                "[ECO \"D59\"]",
+                "[WhiteElo \"?\"]",
+                "[BlackElo \"?\"]",
+                "[PlyCount \"81\"]",
+                "",
+                "1. c4 e6 2. Nf3 d5 3. d4 Nf6 4. Nc3 Be7 5. Bg5 O-O 6. e3 h6",
+                "7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6",
+                "12. Qa4 c5 13. Qa3 Rc8 14. Bb5 a6 15. dxc5 bxc5 16. O-O Ra7",
+                "17. Be2 Nd7 18. Nd4 Qf8 19. Nxe6 fxe6 20. e4 d4 21. f4 Qe7",
+                "22. e5 Rb8 23. Bc4 Kh8 24. Qh3 Nf8 25. b3 a5 26. f5 exf5",
+                "27. Rxf5 Nh7 28. Rcf1 Qd8 29. Qg3 Re7 30. h4 Rbb7 31. e6 Rbc7",
+                "32. Qe5 Qe8 33. a4 Qd8 34. R1f2 Qe8 35. R2f3 Qd8 36. Bd3 Qe8",
+                "37. Qe4 Nf6 38. Rxf6 gxf6 39. Rxf6 Kg8 40. Bc4 Kh8 41. Qf4 1-0",
+            };
+
+            chess.LoadPgn(string.Join("\r\n", pgn));
+
+            var actualHeaders = chess.GetHeaders();
+
+            Assert.Equal("1972.01.07", actualHeaders.FirstOrDefault(h => h.Key == "Date")?.Value);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest11()
+        {
+            var chess = new Chess("4k3/8/8/8/8/4p3/8/4K3 w - - 0 1");
+
+            Assert.Throws<InvalidMoveException>(() => chess.Move("e4"));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest12()
+        {
+            var chess = new Chess();
+
+            chess.ClearBoard();
+
+            Assert.Throws<InvalidMoveException>(() => chess.Move("e4"));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest13()
+        {
+            var chess = new Chess();
+
+            var expectedHistory = new[]
+            {
+                "e4",
+                "e5",
+                "Nf3",
+                "Nc6",
+                "Bb5",
+                "d6",
+                "d4",
+                "Bd7",
+                "Nc3",
+                "Nf6",
+                "Bxc6",
+            };
+
+            var pgns = new[]
+            {
+                "1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 {comment}",
+                "1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 {comment} *",
+                "1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 * {comment}",
+                "[White \"name\"]\r\n\r\n1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 {comment}"
+            };
+
+            string[] actualHistory;
+
+            foreach (var pgn in pgns)
+            {
+                chess.LoadPgn(pgn);
+
+                actualHistory = chess.GetHistory();
+
+                Assert.Equal(expectedHistory.Length, actualHistory.Length);
+
+                foreach (var history in expectedHistory)
+                    Assert.Contains(history, actualHistory);
+
+                Assert.DoesNotContain(chess.GetHeaders(), header => header.Key == "Result");
+            }
+
+            chess.LoadPgn("[White \"name\"]\r\n\r\n1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 {comment} *");
+
+            actualHistory = chess.GetHistory();
+
+            Assert.Equal(expectedHistory.Length, actualHistory.Length);
+
+            foreach (var history in expectedHistory)
+                Assert.Contains(history, actualHistory);
+
+            Assert.Equal("*", chess.GetHeaders().FirstOrDefault(h => h.Key == "Result")?.Value);
+
+            chess.LoadPgn("[White \"name\"]\r\n\r\n1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. d4 Bd7 5. Nc3 Nf6 6. Bxc6 1/2-1/2 {comment}");
+
+            actualHistory = chess.GetHistory();
+
+            Assert.Equal(expectedHistory.Length, actualHistory.Length);
+
+            foreach (var history in expectedHistory)
+                Assert.Contains(history, actualHistory);
+
+            Assert.Equal("1/2-1/2", chess.GetHeaders().FirstOrDefault(h => h.Key == "Result")?.Value);
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest14()
+        {
+            var chess = new Chess();
+
+            chess.LoadPgn("1. e4 d5 2. Nf3 Nd7 3. Bb5 Nf6 4. O-O");
+
+            Assert.Equal("1. e4 d5 2. Nf3 Nd7 3. Bb5 Nf6 4. O-O", chess.GetPgn());
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest15()
+        {
+            var chess = new Chess();
+
+            chess.LoadFen("r4rk1/4nqpp/1p1p4/2pPpp2/bPP1P3/R1B1NQ2/P4PPP/1R4K1 w - - 0 28");
+            chess.Move("bxc5");
+            chess.Undo();
+            chess.Move("bxc5", true);
+            chess.LoadFen("rnbqk2r/p1pp1ppp/1p2pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQkq - 0 5");
+
+            Assert.Throws<InvalidMoveException>(() => chess.Move("Nge2", true));
+            Assert.Null(Record.Exception(() => chess.Move("Nge2")));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest16()
+        {
+            var chess = new Chess();
+
+            var pgn = "\r\n    [white \"player a\"]\r\n         [black \"player b\"]\r\n              [note \"whitespace after right bracket\"]\r\n\r\n            1. e4 e5";
+
+            Assert.Null(Record.Exception(() => chess.LoadPgn(pgn)));
+        }
+
+        [Fact]
+        [Trait("Category", "Regression")]
+        public void RegressionTest17()
+        {
+            var chess = new Chess();
+
+            var pgn = "\r\n    [white \"player a\"]\r\n         [black \"player b\"]\r\n              [note \"whitespace after right bracket and in empty line below\"]\r\n\r\n            1. e4 e5";
+
+            Assert.Null(Record.Exception(() => chess.LoadPgn(pgn)));
+        }
         #endregion
     }
 }
